@@ -54,6 +54,8 @@ The predev/prebuild script copies the pinned CAD and Python runtimes from instal
 
 The browser automation connection was unavailable in this environment, so visual rendering and downloaded PNG/video playback still require an interactive browser check. The optional WebMCP surface is feature-detected and cannot be validated without a supporting browser.
 
+Export recovery tests exercise capture/encoder startup failures, tab hiding, PNG encoding failure, and a lost rendering context using mocked browser resources. They verify cleanup and restored controls, not actual encoded video or rendered pixels. Recording stops with an error if the tab is hidden.
+
 ## Dependencies and reference documentation
 
 - [Three.js](https://threejs.org/docs/)

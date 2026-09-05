@@ -8,7 +8,7 @@
   "scripts": {
     "predev": "node scripts/copy-runtime.mjs",
     "prebuild": "node scripts/copy-runtime.mjs",
-    "test": "node tests/integration.mjs",
+    "test": "node tests/integration.mjs && node tests/export-lifecycle.mjs",
     "typecheck": "tsc --noEmit",
     "dev": "vinext dev",
     "build": "vinext build",

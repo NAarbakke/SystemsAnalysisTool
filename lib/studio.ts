@@ -49,13 +49,42 @@ export class Studio {
  fit(full=false){const box=new T.Box3();for(const p of this.parts){if(!p.visible)continue;for(const t of full?[0,1]:[this.amount/100]){const c=p.home.clone().addScaledVector(p.offset,t*this.spread);box.union(new T.Box3().setFromCenterAndSize(c,p.size));}}if(box.isEmpty())return;const center=box.getCenter(new T.Vector3()),radius=box.getSize(new T.Vector3()).length()/2;const fov=T.MathUtils.degToRad(this.camera.fov),limiting=2*Math.atan(Math.tan(fov/2)*Math.min(1,this.camera.aspect));const distance=Math.max(2,radius/Math.sin(limiting/2)*1.15);const direction=this.camera.position.clone().sub(this.controls.target).normalize();this.controls.target.copy(center);this.camera.position.copy(center).addScaledVector(direction,distance);this.camera.far=Math.max(2000,distance*5);this.camera.updateProjectionMatrix();this.controls.update();}
  resetCamera(){this.camera.position.copy(this.controls.target).add(new T.Vector3(9,6,10));this.fit(true);}
  private download(blob:Blob,name:string){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name.replace(/[<>:"/\\|?*]/g,'_');a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);}
- saveImage(name:string){const old=this.scene.background;this.scene.background=new T.Color('#f3f6f3');this.renderer.render(this.scene,this.camera);this.renderer.domElement.toBlob(blob=>{if(blob)this.download(blob,name.replace(/\.[^.]+$/,'')+'-exploded.png');},'image/png');this.scene.background=old;}
+ async saveImage(name:string){const old=this.scene.background;try{this.scene.background=new T.Color('#f3f6f3');this.apply();this.renderer.render(this.scene,this.camera);const blob=await new Promise<Blob>((resolve,reject)=>this.renderer.domElement.toBlob(blob=>blob?resolve(blob):reject(new Error('The browser could not create a PNG. Try a smaller window or another browser.')),'image/png'));this.download(blob,name.replace(/\.[^.]+$/,'')+'-exploded.png');}finally{this.scene.background=old;}}
  async saveVideo(name:string){
   if(typeof MediaRecorder==='undefined'||!this.renderer.domElement.captureStream)throw new Error('Video export is unavailable in this browser. Use a current Chrome, Edge or Firefox browser.');
   const mime=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/mp4'].find(x=>MediaRecorder.isTypeSupported(x));if(!mime)throw new Error('This browser has no supported video encoder. Save a PNG or try another browser.');
-  const previous={amount:this.amount,playing:this.playing,background:this.scene.background};this.playing=false;this.cb.onPlay(false);this.recording=true;this.controls.enabled=false;this.scene.background=new T.Color('#f3f6f3');const stream=this.renderer.domElement.captureStream(30);const recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8000000});this.recorder=recorder;const chunks:Blob[]=[];let frame=0;
-  try{await new Promise<void>((resolve,reject)=>{recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};recorder.onerror=()=>reject(new Error('The video encoder failed. Try a shorter recording.'));recorder.onstop=()=>{if(this.disposed)reject(new Error('Workspace closed.'));else resolve();};this.amount=0;this.apply();this.renderer.render(this.scene,this.camera);recorder.start(100);const start=performance.now();const record=(now:number)=>{const t=Math.min(1,(now-start)/(this.duration*1000));this.amount=(1-Math.cos(t*Math.PI*2))*50;this.cb.onProgress(this.amount);if(t<1&&!this.disposed)frame=requestAnimationFrame(record);else if(recorder.state!=='inactive')recorder.stop();};frame=requestAnimationFrame(record);});if(!chunks.length)throw new Error('The video encoder produced an empty file.');this.download(new Blob(chunks,{type:mime}),name.replace(/\.[^.]+$/,'')+'-exploded.'+(mime.startsWith('video/mp4')?'mp4':'webm'));}
-  finally{cancelAnimationFrame(frame);if(recorder.state!=='inactive')recorder.stop();stream.getTracks().forEach(t=>t.stop());this.recorder=null;this.recording=false;this.controls.enabled=true;this.amount=previous.amount;this.playing=previous.playing;this.scene.background=previous.background;this.cb.onProgress(this.amount);this.cb.onPlay(this.playing);this.resize();}
+  const previous={amount:this.amount,playing:this.playing,background:this.scene.background,controls:this.controls.enabled};
+  let stream:MediaStream|null=null,recorder:MediaRecorder|null=null,frame=0;
+  let visibilityCleanup=()=>{};
+  const chunks:Blob[]=[];
+  this.playing=false;this.cb.onPlay(false);this.recording=true;this.controls.enabled=false;this.scene.background=new T.Color('#f3f6f3');
+  try{
+   stream=this.renderer.domElement.captureStream(30);
+   recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8000000});this.recorder=recorder;
+   const encoder=recorder;
+   await new Promise<void>((resolve,reject)=>{
+    const onVisibility=()=>{if(document.hidden)reject(new Error('Recording was interrupted. Keep this tab visible while exporting.'));};
+    document.addEventListener('visibilitychange',onVisibility);
+    visibilityCleanup=()=>document.removeEventListener('visibilitychange',onVisibility);
+    if(document.hidden){onVisibility();return;}
+    encoder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+    encoder.onerror=()=>reject(new Error('The video encoder failed. Try a shorter recording.'));
+    encoder.onstop=()=>{if(this.disposed)reject(new Error('Workspace closed.'));else resolve();};
+    this.amount=0;this.apply();this.renderer.render(this.scene,this.camera);encoder.start(100);
+    const start=performance.now();
+    const record=(now:number)=>{
+     if(document.hidden){reject(new Error('Recording was interrupted. Keep this tab visible while exporting.'));return;}
+     const t=Math.min(1,(now-start)/(this.duration*1000));this.amount=(1-Math.cos(t*Math.PI*2))*50;this.cb.onProgress(this.amount);
+     this.apply();this.renderer.render(this.scene,this.camera);
+     if(t<1&&!this.disposed)frame=requestAnimationFrame(record);else if(encoder.state!=='inactive')encoder.stop();
+    };
+    frame=requestAnimationFrame(record);
+   });
+   if(!chunks.length)throw new Error('The video encoder produced an empty file.');
+   this.download(new Blob(chunks,{type:mime}),name.replace(/\.[^.]+$/,'')+'-exploded.'+(mime.startsWith('video/mp4')?'mp4':'webm'));
+  }finally{
+   visibilityCleanup();cancelAnimationFrame(frame);if(recorder&&recorder.state!=='inactive')recorder.stop();stream?.getTracks().forEach(t=>t.stop());this.recorder=null;this.recording=false;this.controls.enabled=previous.controls;this.amount=previous.amount;this.playing=previous.playing;this.scene.background=previous.background;this.cb.onProgress(this.amount);this.cb.onPlay(this.playing);this.resize();
+  }
  }
  dispose(){this.disposed=true;cancelAnimationFrame(this.frame);if(this.recorder?.state==='recording')this.recorder.stop();this.observer.disconnect();this.controls.dispose();this.clear();this.env.dispose();this.renderer.dispose();this.renderer.domElement.remove();this.planner.dispose();this.cad.dispose();}
 }

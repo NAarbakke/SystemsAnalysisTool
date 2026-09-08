@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#eeede8" />
+  <title>Maps | SystemsAnalysisTool</title>
+  <script>
+      var appearance = 'obsidian', fontChoice = 'editorial';
+      try {
+        appearance = localStorage.getItem('viewer-appearance') || localStorage.getItem('map-appearance') || (localStorage.getItem('viewer-theme') === 'light' ? 'ivory' : 'obsidian');
+        fontChoice = localStorage.getItem('viewer-font') || 'editorial';
+      } catch {}
+      if (!['obsidian','midnight','aurora','ember','ivory'].includes(appearance)) appearance = 'obsidian';
+      if (!['editorial','modern','system','technical'].includes(fontChoice)) fontChoice = 'editorial';
+      document.documentElement.dataset.appearance = appearance;
+      document.documentElement.dataset.mapTheme = appearance;
+      document.documentElement.dataset.theme = appearance === 'ivory' ? 'light' : 'dark';
+      document.documentElement.dataset.font = fontChoice;
+    </script>
+</head>
+<body>
+  <header class="map-header"><div class="map-brand"><span class="map-mark" aria-hidden="true"><i></i><i></i><i></i></span><div><span class="eyebrow">SystemsAnalysisTool</span><h1>Maps</h1></div></div><div data-appearance-host></div></header>
+  <main>
+    <div id="map-globe" aria-label="Interactive Earth map"></div>
+    <section class="map-panel" aria-label="Map controls">
+      <label for="map-source">Map source</label>
+      <select id="map-source" disabled><option>Loading sources…</option></select>
+      <p id="source-description"></p>
+      <div class="source-meta"><span id="source-network"></span><span id="source-detail"></span></div>
+      <p id="map-status" role="status">Loading map…</p>
+      <button id="map-retry" hidden type="button">Retry source</button>
+      <hr />
+      <label for="map-place">View</label>
+      <select id="map-place"><option value="earth">Earth</option><option value="europe">Europe</option><option value="oslo">Oslo waterfront</option><option value="sanfrancisco">San Francisco waterfront</option></select>
+      <p class="hint">Drag to move. Scroll to zoom. Ctrl + drag to tilt.</p>
+      <details><summary>Display &amp; map access</summary>
+        <label for="map-quality">Display quality</label>
+        <select id="map-quality"><option value="high">High — up to 2× pixel density</option><option value="native">Native — full display resolution</option><option value="balanced">Balanced — lower GPU load</option></select>
+        <p class="hint">Sharper imagery needs detailed source tiles. Display quality controls rendering, not the resolution captured by the satellite.</p>
+        <p class="hint">The app runs locally. Online sources stream from their providers. For a disconnected intranet, use a configured internal source or the coarse offline globe.</p>
+        <a href="./data/maps/README.md">Map sources &amp; intranet setup</a>
+      </details>
+    </section>
+    <output id="map-scale" aria-label="Camera height"></output>
+  </main>
+  <script type="module" src="/src/maps/main.ts"></script>
+</body>
+</html>

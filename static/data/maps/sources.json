@@ -1,0 +1,36 @@
+{
+  "allowOnline": true,
+  "defaultSource": "satellite",
+  "sources": [
+    {
+      "id": "satellite",
+      "name": "Satellite · Esri World Imagery",
+      "type": "arcgis",
+      "network": "online",
+      "url": "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+      "description": "Satellite and aerial imagery. Metre-or-better detail in many areas; resolution and capture dates vary by location. Uses the service’s full tile pyramid."
+    },
+    {
+      "id": "streets",
+      "name": "Streets · OpenStreetMap",
+      "type": "xyz",
+      "network": "online",
+      "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+      "maximumLevel": 19,
+      "credit": "© OpenStreetMap contributors",
+      "creditUrl": "https://www.openstreetmap.org/copyright",
+      "description": "Roads, place names, buildings and paths. Cartographic detail through zoom level 19."
+    },
+    {
+      "id": "offline",
+      "name": "Offline · NASA Blue Marble",
+      "type": "xyz",
+      "network": "intranet",
+      "url": "./earth/{z}/{x}/{y}.jpg",
+      "projection": "geographic",
+      "maximumLevel": 5,
+      "credit": "NASA Blue Marble Next Generation · July 2004",
+      "description": "Bundled world overview, about 2.4 km per pixel at the equator. Coarse fallback only; no detailed ground imagery."
+    }
+  ]
+}

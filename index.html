@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="A simple, local 3D exploded assembly viewer." />
+    <meta name="theme-color" content="#eeede8" />
+    <script>
+      var appearance = 'obsidian', fontChoice = 'editorial';
+      try {
+        appearance = localStorage.getItem('viewer-appearance') || localStorage.getItem('map-appearance') || (localStorage.getItem('viewer-theme') === 'light' ? 'ivory' : 'obsidian');
+        fontChoice = localStorage.getItem('viewer-font') || 'editorial';
+      } catch {}
+      if (!['obsidian','midnight','aurora','ember','ivory'].includes(appearance)) appearance = 'obsidian';
+      if (!['editorial','modern','system','technical'].includes(fontChoice)) fontChoice = 'editorial';
+      document.documentElement.dataset.appearance = appearance;
+      document.documentElement.dataset.mapTheme = appearance;
+      document.documentElement.dataset.theme = appearance === 'ivory' ? 'light' : 'dark';
+      document.documentElement.dataset.font = fontChoice;
+    </script>
+    <title>SystemsAnalysisTool</title>
+  </head>
+  <body>
+    <nav class="view-menu" aria-label="Viewer mode">
+      <div class="wordmark"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="m4 11 12-6 12 6-12 6zM4 17l12 6 12-6M4 23l12 6 12-6"/></svg><div><strong>SystemsAnalysisTool</strong></div></div>
+      <div class="mode-switch"><button id="assembly-mode" type="button" aria-pressed="true"><span class="tab-number" aria-hidden="true">01</span> Assembly</button><button id="flyover-mode" type="button" aria-pressed="false"><span class="tab-number" aria-hidden="true">02</span> Flyover</button><button id="signals-mode" type="button" aria-pressed="false"><span class="tab-number" aria-hidden="true">03</span> Signal Studio</button></div>
+      <div class="nav-tools"><span class="local-status">LOCAL WORKSPACE</span><div data-appearance-host></div></div>
+    </nav>
+    <main id="assembly-view">
+      <header>
+        <p class="eyebrow"><span class="section-number">01</span> ASSEMBLY</p>
+        <h1>SS-27 / Topol-M</h1>
+        <p class="subtitle">Illustrative exterior · 8 pieces</p>
+        <label class="sr-only" for="model-picker">Choose model</label>
+        <select id="model-picker" disabled></select>
+      </header>
+      <form id="orientation" class="orientation">
+        <fieldset id="pose-fields" disabled>
+          <legend>Vehicle orientation</legend>
+          <label for="rotation-mode" class="sr-only">Orientation format</label>
+          <select id="rotation-mode"><option value="euler">Euler angles (degrees)</option><option value="quaternion">Quaternion (x, y, z, w)</option></select>
+          <div class="components">
+            <label>X<input id="rotation-x" type="number" step="any" value="0" required></label>
+            <label>Y<input id="rotation-y" type="number" step="any" value="0" required></label>
+            <label>Z<input id="rotation-z" type="number" step="any" value="0" required></label>
+            <label id="w-field" hidden>W<input id="rotation-w" type="number" step="any" value="1"></label>
+          </div>
+          <p id="rotation-help">Intrinsic XYZ order · degrees</p>
+          <div class="pose-actions"><button type="submit">Apply orientation</button><button id="reset-orientation" type="button">Reset</button></div>
+          <p class="coordinate-note">Model axes → world axes (Y up). Dragging orbits the camera.</p>
+          <p id="rotation-error" role="alert" hidden></p>
+          <details id="flight-replay">
+            <summary>Orientation replay</summary>
+            <p class="coordinate-note">Paste CSV: time in seconds, then X, Y, Z angles. Roll/pitch/yaw map to X/Y/Z. Convert simulator axes to this model's axes first.</p>
+            <label for="replay-csv">Time series</label>
+            <textarea id="replay-csv" rows="5" spellcheck="false" placeholder="time,x,y,z&#10;0,0,0,0&#10;2,20,0,10"></textarea>
+            <label for="replay-file">Or open a CSV file</label>
+            <input id="replay-file" type="file" accept=".csv,text/csv,text/plain">
+            <div class="replay-options">
+              <label>Angle units<select id="replay-units"><option value="degrees">Degrees</option><option value="radians">Radians</option></select></label>
+              <label>Intrinsic order<select id="replay-order"><option>XYZ</option><option>ZYX</option><option>YXZ</option><option>ZXY</option><option>YZX</option><option>XZY</option></select></label>
+            </div>
+            <div class="pose-actions"><button id="load-replay" type="button">Load series</button><button id="example-replay" type="button">Use example</button></div>
+            <p id="replay-message" class="coordinate-note" role="status">Local only. No file is uploaded.</p>
+            <div class="pose-actions"><button id="play-replay" type="button" disabled>Play</button><button id="restart-replay" type="button" disabled>Restart</button></div>
+            <label for="replay-time">Replay time <output id="replay-time-value">0.00 / 0.00 s</output></label>
+            <input id="replay-time" type="range" min="0" max="1" step="any" value="0" disabled>
+            <p class="coordinate-note">Shortest-path rotation between samples. Pauses when the tab is hidden. Orientation only; no position replay.</p>
+          </details>
+        </fieldset>
+      </form>
+      <div id="viewport" role="img" aria-label="Interactive SS-27 exterior model. Drag to rotate and scroll to zoom."></div>
+      <div class="controls control-dock">
+        <button id="explode" type="button" aria-pressed="false" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 8 8-4 8 4-8 4zM4 12l8 4 8-4M4 16l8 4 8-4"/></svg>
+          <span id="button-label">Loading model…</span>
+        </button>
+        <div class="separation"><label for="separation">PART SEPARATION <output id="separation-value" for="separation">0%</output></label><input id="separation" type="range" min="0" max="100" step="1" value="0" disabled></div>
+        <p class="hint">Drag to rotate <span>·</span> Scroll to zoom</p>
+      </div>
+      <p id="status" class="sr-only" role="status" aria-live="polite">Preparing model.</p>
+      <p id="error" role="alert" hidden></p>
+      <noscript>This viewer requires JavaScript to display the model.</noscript>
+    </main>
+    <section id="flyover-view" hidden aria-label="Earth flyover">
+      <div id="globe"></div>
+      <aside class="flyover-panel">
+        <p class="eyebrow"><span class="section-number">02</span> EARTH VIEW</p><h1>Flyover</h1>
+        <p class="intro-note">Flight playback on the globe.</p>
+        <label for="flyover-model">Vehicle</label><select id="flyover-model"></select>
+        <label class="notam-toggle"><input id="show-notams" type="checkbox" checked disabled> Show NOTAM areas</label>
+        <details><summary>Demo NOTAM areas</summary><p id="notam-status" class="coordinate-note">Loading local areas…</p><div id="notam-list"></div></details>
+        <div class="pose-actions"><button id="flight-overview" type="button" disabled>Whole route</button><button id="flight-follow" type="button" aria-pressed="false" disabled>Follow vehicle</button></div>
+        <p id="flight-position" class="coordinate-note"></p>
+        <details id="state-readout" hidden><summary>State vector readout</summary><p id="flight-state" class="coordinate-note"></p></details>
+        <details><summary>Load a flight</summary>
+          <label for="flight-dof">Input type</label><select id="flight-dof"><option value="trajectory">Position series (existing format)</option><option value="3">3DOF — position + velocity</option><option value="6">6DOF — position + velocity + attitude + rates</option></select>
+          <div id="state-options" hidden>
+            <label for="state-position">Position coordinates</label><select id="state-position"><option value="geodetic">Latitude / longitude / altitude</option><option value="ecef">ECEF X / Y / Z (metres)</option></select>
+            <label for="state-velocity">Velocity coordinates (m/s)</label><select id="state-velocity"><option value="enu">East / North / Up</option><option value="ned">North / East / Down</option><option value="ecef">ECEF X / Y / Z</option><option value="body">Body X / Y / Z (6DOF only)</option></select>
+            <div id="attitude-options" hidden>
+              <label for="state-attitude">Attitude format</label><select id="state-attitude"><option value="euler">Euler roll / pitch / yaw (ZYX)</option><option value="quaternion">Quaternion x / y / z / w</option></select>
+              <label for="state-frame">Attitude reference frame</label><select id="state-frame"><option value="enu">Local East / North / Up</option><option value="ned">Local North / East / Down</option><option value="ecef">Earth-fixed (ECEF)</option></select>
+              <label for="state-body">Body axes</label><select id="state-body"><option value="flu">Forward / Left / Up</option><option value="frd">Forward / Right / Down</option></select>
+              <label for="state-units">Euler angles / body rates</label><select id="state-units"><option value="degrees">Degrees / degrees per second</option><option value="radians">Radians / radians per second</option></select>
+            </div>
+          </div>
+          <p id="flight-format-help" class="coordinate-note">Time: seconds. Latitude/longitude: degrees. Altitude: metres above the WGS84 ellipsoid.</p>
+          <code id="flight-header">time,latitude,longitude,altitude</code>
+          <label for="flight-csv">Flight CSV</label><textarea id="flight-csv" rows="6" spellcheck="false"></textarea>
+          <label for="flight-file">Open CSV file</label><input id="flight-file" type="file" accept=".csv,text/csv">
+          <p id="flight-attitude-help" class="coordinate-note">Position series may include roll,pitch,yaw (ZYX degrees in ENU). Without attitude, the vehicle faces along the route.</p>
+          <div class="pose-actions"><button id="flight-load" type="button" disabled>Load flight</button><button id="flight-example" type="button" disabled>Example</button></div>
+        </details>
+        <p id="flight-message" role="status">Open Flyover to load the globe.</p>
+        <details class="view-notes"><summary>About this view</summary><p class="coordinate-note">NASA Blue Marble · 16K offline imagery. No detailed terrain. Vehicle enlarged for visibility. Flight and NOTAM examples are synthetic.</p></details>
+      </aside>
+      <div class="flight-controls control-dock">
+        <div class="playback-buttons"><button id="flight-play" type="button" disabled>Play</button><button id="flight-restart" type="button" disabled>Restart</button></div>
+        <div class="flight-timeline"><label for="flight-time">FLIGHT REPLAY <output id="flight-time-value">0.0 / 60.0 s</output></label><input id="flight-time" type="range" min="0" max="60" step="any" value="0" disabled></div>
+        <div class="dock-caption"><span class="eyebrow">CAMERA</span><span>Drag to orbit; scroll to zoom.</span></div>
+      </div>
+    </section>
+    <section id="signals-view" aria-label="Signal Studio" hidden></section><script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

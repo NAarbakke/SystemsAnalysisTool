@@ -1,7 +1,7 @@
-import type { Box3, BufferGeometry, Group, Mesh, MeshStandardMaterial, Vector3 } from 'three';
+import type { Box3, Group, Mesh, Vector3 } from 'three';
 
 export interface AssemblyPart {
-  mesh: Mesh<BufferGeometry, MeshStandardMaterial>;
+  mesh: Mesh;
   home: Vector3;
   offset: Vector3;
 }

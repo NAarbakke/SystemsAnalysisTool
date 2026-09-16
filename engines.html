@@ -1,0 +1,37 @@
+﻿<!doctype html>
+<html lang="en" data-theme="dark" data-font="modern">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#07090c"><title>Engines — SystemsAnalysisTool</title>
+<script>if(new URLSearchParams(location.search).has('embedded'))document.documentElement.dataset.embedded='true';</script></head>
+<body class="engine-page">
+<header class="engine-nav"><a href="./index.html">System Modelling Tool</a><span>Engines</span><div data-appearance-host></div></header>
+<main class="engine-dashboard">
+ <header class="engine-toolbar">
+  <label class="model-picker">Model<select id="engine-model"><option value="turbofan">Civilian turbofan</option><option value="solid">Solid rocket · schematic</option><option value="liquid">Liquid rocket · schematic</option></select></label>
+  <span class="drawing-help">Select a section to explore</span>
+ </header>
+ <div class="diagram-layout">
+  <section class="diagram-stage" aria-label="Engine diagram">
+   <div id="engine-3d" hidden aria-label="Interactive engine cutaway. Drag to orbit and scroll to zoom."></div>
+   <svg id="engine-svg" viewBox="0 0 1200 560" aria-label="Selectable engine sections" data-drawing="shaded">
+    <defs>
+     <linearGradient id="metal" x1="0" y1="0" x2="0" y2="100%"><stop stop-color="#e0e3e3"/><stop offset=".32" stop-color="#9da7ae"/><stop offset=".6" stop-color="#6b767f"/><stop offset="1" stop-color="#36434e"/></linearGradient>
+     <linearGradient id="blade-metal" x1="0" y1="0" x2="100%" y2="30%"><stop stop-color="#485662"/><stop offset=".36" stop-color="#cbd3d7"/><stop offset=".6" stop-color="#87949c"/><stop offset="1" stop-color="#43525e"/></linearGradient>
+     <linearGradient id="hot-metal" x1="0" y1="0" x2="100%" y2="50%"><stop stop-color="#746a5f"/><stop offset=".45" stop-color="#b8aa91"/><stop offset="1" stop-color="#504940"/></linearGradient>
+     <linearGradient id="shaft-metal" x1="0" y1="0" x2="0" y2="100%"><stop stop-color="#ced4d6"/><stop offset=".5" stop-color="#687984"/><stop offset="1" stop-color="#33414b"/></linearGradient>
+     <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(40)"><path d="M0 0V8" stroke="currentColor" opacity=".4" stroke-width="1"/></pattern>
+    </defs>
+    <g id="engine-scene"></g>
+   </svg>
+   <div class="diagram-meta"><span id="diagram-badge"></span><span>ILLUSTRATIVE · NOT TO SCALE</span></div>
+   <div class="diagram-tools"><button id="zoom-out" aria-label="Zoom out">−</button><output id="zoom-level">100%</output><button id="zoom-in" aria-label="Zoom in">+</button><button id="fit">Fit</button><label><input id="flow-toggle" type="checkbox" checked> Airflow</label></div>
+  </section>
+  <details class="engine-inspector" open>
+   <summary>Components</summary>
+   <div class="inspector-heading"><span class="eyebrow">SELECTED SECTION</span><span id="selection-index">—</span></div>
+   <h2 id="selected-name">Overview</h2><p id="selected-role"></p>
+   <div id="component-buttons" aria-label="Engine components"></div>
+   <div id="readings" aria-live="polite" hidden></div>
+   <p id="data-note" class="data-note"></p><a id="reference-link" class="reference-link" target="_blank" rel="noopener noreferrer" hidden>Layout reference · NASA</a>
+  </details>
+ </div>
+</main><script type="module" src="/src/engines/main.js"></script></body></html>

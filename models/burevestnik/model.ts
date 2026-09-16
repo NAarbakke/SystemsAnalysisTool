@@ -1,5 +1,6 @@
+import { detailMesh, band, box, disposeParts, type Detail } from '../display-details.ts';
 import {
-  Box3, BufferGeometry, Float32BufferAttribute, Group, LatheGeometry,
+  Box3, BufferGeometry, CatmullRomCurve3, Float32BufferAttribute, Group, LatheGeometry, TubeGeometry,
   Mesh, MeshStandardMaterial, Shape, ExtrudeGeometry, Vector2, Vector3,
 } from 'three';
 import type { AssemblyPart } from '../../src/assembly.ts';
@@ -12,9 +13,9 @@ export function createRocket() {
   root.userData = { visualOnly: true, units: 'arbitrary', source: 'PDF exterior illustrations, figures 2–3' };
   const parts: AssemblyPart[] = [];
   const materials = {
-    red: new MeshStandardMaterial({ color: '#8e2524', metalness: .25, roughness: .4 }),
-    nose: new MeshStandardMaterial({ color: '#aa3028', metalness: .2, roughness: .38 }),
-    fin: new MeshStandardMaterial({ color: '#a3312c', metalness: .25, roughness: .35 }),
+    red: new MeshStandardMaterial({ color: '#8e2524', metalness: .12, roughness: .48 }),
+    nose: new MeshStandardMaterial({ color: '#aa3028', metalness: .1, roughness: .43 }),
+    fin: new MeshStandardMaterial({ color: '#a3312c', metalness: .12, roughness: .45 }),
     pale: new MeshStandardMaterial({ color: '#c2c8c5', metalness: .55, roughness: .3 }),
     dark: new MeshStandardMaterial({ color: '#373d3d', metalness: .4, roughness: .42 }),
   };
@@ -22,7 +23,7 @@ export function createRocket() {
   // A rounded rectangular graphic silhouette, sampled as rings along the X axis.
   function shell(stations: [number, number, number][]) {
     const positions: number[] = [], indices: number[] = [];
-    const segments = 128;
+    const segments = 64;
     for (const [x, width, height] of stations) {
       for (let i = 0; i < segments; i++) {
         const a = i / segments * Math.PI * 2;
@@ -37,14 +38,17 @@ export function createRocket() {
         indices.push(a, b, a + segments, b, b + segments, a + segments);
       }
     }
-    const firstCenter = positions.length / 3;
-    positions.push(stations[0][0], 0, 0);
-    const lastCenter = positions.length / 3;
-    positions.push(stations.at(-1)![0], 0, 0);
-    const lastRing = (stations.length - 1) * segments;
-    for (let i = 0; i < segments; i++) {
-      const next = (i + 1) % segments;
-      indices.push(firstCenter, next, i, lastCenter, lastRing + i, lastRing + next);
+    // Duplicate rim vertices so flat section caps do not distort side normals.
+    for(const end of [0,stations.length-1]){
+      const center=positions.length/3;
+      positions.push(stations[end][0],0,0);
+      const rim=positions.length/3;
+      for(let i=0;i<segments;i++)positions.push(...positions.slice((end*segments+i)*3,(end*segments+i)*3+3));
+      for(let i=0;i<segments;i++){
+        const next=(i+1)%segments;
+        if(end===0)indices.push(center,rim+next,rim+i);
+        else indices.push(center,rim+i,rim+next);
+      }
     }
     const geometry = new BufferGeometry();
     geometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
@@ -75,12 +79,16 @@ export function createRocket() {
     return mesh;
   }
 
-  add('Nose exterior', shell([
-    [-1.05, .025, .02], [-.85, .19, .14], [-.5, .34, .26], [0, .4, .32],
-  ]), materials.nose, [-3, 0, 0], [-1.15, .1, 0]);
+  add('Nose exterior', shell(Array.from({length:25},(_,i):[number,number,number]=>{
+    const t=i/24,round=Math.sin(t*Math.PI/2);
+    return [-1.05+1.05*t,.008+.392*round,.006+.314*round];
+  })), materials.nose, [-3, 0, 0], [-1.15, .1, 0]);
   add('Main body exterior', shell([[-2, .4, .32], [2, .4, .32]]), materials.red,
     [-.98, 0, 0], [0, 0, 0]);
-  add('Rear body exterior', shell([[-1.15, .4, .32], [1.15, .26, .22]]), materials.red,
+  add('Rear body exterior', shell(Array.from({length:17},(_,i):[number,number,number]=>{
+    const t=i/16,ease=t*t*(3-2*t);
+    return [-1.15+2.3*t,.4-.14*ease,.32-.1*ease];
+  })), materials.red,
     [2.19, 0, 0], [1.1, 0, 0]);
 
   const wing = plate([[-.45, .27], [.32, 2.25], [.8, 2.25], [.35, .27]], .055);
@@ -89,11 +97,11 @@ export function createRocket() {
   add('Right wing', rightWing, materials.fin, [.15, .29, 0], [0, .55, -1.1]);
 
   const pod = new LatheGeometry([
-    new Vector2(0, -1.9), new Vector2(.12, -1.75), new Vector2(.19, -1.5),
-    new Vector2(.19, 1.5), new Vector2(.16, 1.6), new Vector2(0, 1.6),
-  ], 128).rotateZ(-Math.PI / 2);
+    ...Array.from({length:13},(_,i)=>{const t=i/12;return new Vector2(.19*Math.sin(t*Math.PI/2),-1.9+.4*t);}),
+    new Vector2(.19,1.42),new Vector2(.186,1.48),new Vector2(.174,1.54),new Vector2(.15,1.58),new Vector2(.12,1.6),new Vector2(0,1.6),
+  ], 64).rotateZ(-Math.PI / 2);
   add('Left side pod exterior', pod, materials.pale, [-.45, -.22, .52], [0, -.55, 1.15]);
-  add('Right side pod exterior', pod, materials.pale, [-.45, -.22, -.52], [0, -.55, -1.15]);
+  add('Right side pod exterior', pod.clone(), materials.pale, [-.45, -.22, -.52], [0, -.55, -1.15]);
 
   const tailFin = plate([[-.4, .18], [.08, 1], [.46, 1], [.32, .18]], .045);
   for (let i = 0; i < 4; i++) {
@@ -104,6 +112,44 @@ export function createRocket() {
   tailFin.dispose();
   add('Tail end cover', shell([[-.025, .245, .205], [.025, .245, .205]]),
     materials.dark, [3.36, 0, 0], [1.8, 0, 0]);
+
+  // Curved seams follow the rounded rectangular display skin.
+  function contour(x:number,w:number,h:number){
+    const points=Array.from({length:48},(_,i)=>{
+      const a=i*Math.PI/24,c=Math.cos(a),s=Math.sin(a);
+      return new Vector3(x,Math.sign(c)*Math.sqrt(Math.abs(c))*(h+.002),Math.sign(s)*Math.sqrt(Math.abs(s))*(w+.002));
+    });
+    return new TubeGeometry(new CatmullRomCurve3(points,true),64,.0035,4,true);
+  }
+  // Artistic exterior panel lines in arbitrary units.
+  for(const {mesh} of parts){
+    const d:Detail[]=[];
+    if(mesh.name==='Main body exterior'){
+      for(const x of [-1.6,-.7,.65,1.65]){
+        d.push({geometry:contour(x,.4,.32),color:'#5e2525'});
+      }
+      for(const z of [-.403,.403]){
+        d.push({geometry:box(.34,.14,.005,-.45,.02,z),color:'#b84034'});
+        for(const x of [-.59,-.31])for(const y of [-.035,.075])d.push({geometry:box(.014,.014,.008,x,y,z),color:'#d79179'});
+      }
+    }
+    if(mesh.name==='Nose exterior')d.push({geometry:contour(-.055,.398,.319),color:'#742a25'});
+    if(mesh.name==='Rear body exterior')for(const x of [-.88,.25,.96]){
+      const t=(x+1.15)/2.3,e=t*t*(3-2*t);
+      d.push({geometry:contour(x,.4-.14*e,.32-.1*e),color:'#642221'});
+    }
+    if(mesh.name.includes('side pod'))for(const x of [-1.4,-.7,.4,1.35])d.push({geometry:band(.191,.005).rotateZ(-Math.PI/2).translate(x,0,0),color:'#758280'});
+    if(mesh.name==='Left wing'||mesh.name==='Right wing'){
+      const sign=mesh.name==='Left wing'?1:-1;
+      const stripe=plate([[.14,.84],[.65,2.14],[.70,2.14],[.19,.84]],.002);
+      stripe.translate(0,.0295,0);if(sign<0)stripe.rotateX(Math.PI);
+      d.push({geometry:stripe,color:'#792723'});
+      const tip=plate([[.307,2.20],[.331,2.25],[.79,2.25],[.778,2.20]],.002);
+      tip.translate(0,.0295,0);if(sign<0)tip.rotateX(Math.PI);
+      d.push({geometry:tip,color:'#bcb7a8'});
+    }
+    detailMesh(mesh,d);
+  }
 
   function setExplosion(amount: number) {
     const t = Math.max(0, Math.min(1, Number.isFinite(amount) ? amount : 0));
@@ -119,8 +165,7 @@ export function createRocket() {
   return {
     root, parts, bounds, setExplosion,
     dispose() {
-      for (const geometry of new Set(parts.map(p => p.mesh.geometry))) geometry.dispose();
-      for (const material of Object.values(materials)) material.dispose();
+      disposeParts(parts);
       root.clear();
     },
   };

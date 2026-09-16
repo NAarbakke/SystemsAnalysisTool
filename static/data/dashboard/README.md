@@ -1,6 +1,6 @@
-# Signal Studio: local simulation dashboard
+# Telemetry: local simulation dashboard
 
-Open `http://localhost:3000` and select Signal Studio after building and starting the server. It shares navigation and the theme with Assembly and Flyover. Switching tabs retains the loaded dataset and quantity selection. The old dashboard.html URL redirects to this tab. Data import remains independent of the vehicle viewers; the dashboard does not run a flight solver.
+Open `http://localhost:3000` and select Telemetry after building and starting the server. It shares navigation and the theme with Assembly and Flyover. Switching tabs retains the loaded dataset and quantity selection. The old dashboard.html URL redirects to this tab. Data import remains independent of the vehicle viewers; the dashboard does not run a flight solver.
 
 ## Python integration
 

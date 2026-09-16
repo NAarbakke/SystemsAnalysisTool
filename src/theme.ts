@@ -1,51 +1,60 @@
 import './appearance.css';
 import markup from './appearance.html?raw';
-
-const palettes = {
-  obsidian: { name: 'Obsidian', background: '#111315' },
-  midnight: { name: 'Midnight', background: '#0c1220' },
-  aurora: { name: 'Aurora', background: '#0c1715' },
-  ember: { name: 'Ember', background: '#1a1112' },
-  ivory: { name: 'Ivory', background: '#eeede8' },
-} as const;
-type Palette = keyof typeof palettes;
-const fonts = ['editorial', 'modern', 'system', 'technical'];
+import { resolveMode } from './palettes.ts';
 const root = document.documentElement;
+const fonts = ['editorial', 'modern', 'technical'];
 document.querySelector('[data-appearance-host]')!.innerHTML = markup;
-// Put the popover outside navigation containers so it never inherits their layout.
 document.body.append(document.querySelector('#appearance-menu')!);
 const buttons = document.querySelectorAll<HTMLButtonElement>('[data-palette]');
 const fontSelect = document.querySelector<HTMLSelectElement>('#appearance-font')!;
-
-function applyPalette(palette: Palette) {
-  root.dataset.appearance = palette;
-  root.dataset.mapTheme = palette;
-  root.dataset.theme = palette === 'ivory' ? 'light' : 'dark';
-  document.querySelector('#appearance-name')!.textContent = palettes[palette].name;
-  document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')!.content = palettes[palette].background;
-  buttons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.palette === palette)));
+const themeTokens=['page','paper','ink','muted','accent','series-secondary','line','glass','field','glow','shadow','on-solid'];
+function applyMode(value: string) {
+ const mode=resolveMode(value);
+ themeTokens.forEach(token=>root.style.removeProperty('--'+token));
+ root.dataset.theme = mode;
+ root.dataset.appearance = mode;
+ document.querySelector('#appearance-name')!.textContent = mode === 'light' ? 'Light' : 'Dark';
+ document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')!.content = mode === 'light' ? '#f0f2f5' : '#07090c';
+ document.querySelectorAll<HTMLButtonElement>('[data-palette]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.palette === mode)));
 }
-function applyFont(font: string) {
-  root.dataset.font = fonts.includes(font) ? font : 'editorial';
-  fontSelect.value = root.dataset.font;
+function chooseMode(value:string){applyMode(value);try{localStorage.setItem('viewer-appearance',root.dataset.appearance!);}catch{}}
+function applyFont(value: string) {
+ root.dataset.font = fonts.includes(value) ? value : 'modern'; fontSelect.value = root.dataset.font;
 }
-let initialPalette = 'obsidian', initialFont = 'editorial';
+let mode = root.dataset.theme || 'dark', font = root.dataset.font || 'modern';
 try {
-  initialPalette = localStorage.getItem('viewer-appearance') || localStorage.getItem('map-appearance') || (localStorage.getItem('viewer-theme') === 'light' ? 'ivory' : 'obsidian');
-  initialFont = localStorage.getItem('viewer-font') || 'editorial';
-} catch { /* Preferences are optional. */ }
-applyPalette(Object.hasOwn(palettes, initialPalette) ? initialPalette as Palette : 'obsidian');
-applyFont(initialFont);
+ mode = localStorage.getItem('viewer-appearance') || localStorage.getItem('map-appearance') || localStorage.getItem('viewer-theme') || mode;
+ font = localStorage.getItem('viewer-font') || font;
+} catch {}
+chooseMode(mode); applyFont(font);
 buttons.forEach(button => button.addEventListener('click', () => {
-  const palette = button.dataset.palette as Palette;
-  applyPalette(palette);
-  try { localStorage.setItem('viewer-appearance', palette); } catch { /* Preview still works. */ }
+ chooseMode(button.dataset.palette!);
 }));
 fontSelect.addEventListener('change', () => {
-  applyFont(fontSelect.value);
-  try { localStorage.setItem('viewer-font', fontSelect.value); } catch { /* Preview still works. */ }
+ applyFont(fontSelect.value);
+ try { localStorage.setItem('viewer-font', fontSelect.value); } catch {}
 });
 window.addEventListener('storage', event => {
-  if (event.key === 'viewer-appearance' && event.newValue && Object.hasOwn(palettes, event.newValue)) applyPalette(event.newValue as Palette);
-  if (event.key === 'viewer-font' && event.newValue) applyFont(event.newValue);
+ if (event.key === 'viewer-appearance') applyMode(event.newValue || 'dark');
+ if (event.key === 'viewer-font') applyFont(event.newValue || 'modern');
 });
+if (root.dataset.embedded && window.parent !== window) {
+ const host = window.parent.document.documentElement;
+ const sync = () => {
+  applyMode(host.dataset.appearance || 'dark'); applyFont(host.dataset.font || 'modern');
+  window.dispatchEvent(new Event('resize'));
+ };
+ new MutationObserver(sync).observe(host, { attributes:true, attributeFilter:['data-appearance','data-font'] });
+ sync();
+}
+
+document.addEventListener('toggle', event => {
+ const opened = event.target;
+ if (!(opened instanceof HTMLDetailsElement) || !opened.open) return;
+ const section = opened.closest('main, #flyover-view') || document;
+ section.querySelectorAll('details[open]').forEach(detail => {
+  if (detail !== opened && !detail.contains(opened) && !opened.contains(detail)) detail.removeAttribute('open');
+ });
+}, true);
+
+import './immersive.css';

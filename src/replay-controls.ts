@@ -58,7 +58,7 @@ export function createReplay(apply: (rotation: Quaternion) => void, fit: () => v
     try {
       if (selected.size > 5_000_000) throw new Error('Use a CSV smaller than 5 MB.');
       csv.value = await selected.text();
-      message.textContent = 'File opened. Choose its units and order, then Load series.';
+      message.textContent = 'File ready';
       message.classList.remove('invalid');
     } catch (cause) {
       message.textContent = cause instanceof Error ? cause.message : 'Could not read file.';
@@ -67,7 +67,7 @@ export function createReplay(apply: (rotation: Quaternion) => void, fit: () => v
   });
   for (const input of [csv, units, order]) input.addEventListener('input', () => {
     pause();
-    message.textContent = 'Settings edited. Click Load series to use these changes.';
+    message.textContent = 'Unapplied changes';
   });
   play.addEventListener('click', () => {
     if (playing) { pause(); return; }

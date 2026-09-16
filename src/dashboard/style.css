@@ -1,15 +1,15 @@
-.studio-nav { position: sticky; top: 0; z-index: 10; background: var(--page); height: 84px; border-bottom: 1px solid var(--line); display: flex; align-items: center; padding: 0 36px; gap: 25px; }
-.studio-brand { display: flex; align-items: center; gap: 14px; margin-right: auto; }
+.telemetry-nav { position: sticky; top: 0; z-index: 10; background: var(--page); height: 84px; border-bottom: 1px solid var(--line); display: flex; align-items: center; padding: 0 36px; gap: 25px; }
+.telemetry-brand { display: flex; align-items: center; gap: 14px; margin-right: auto; }
 .brand-icon { font-size: 46px; line-height: 1; color: var(--accent); }
-.studio-brand strong { font-size: 12px; letter-spacing: .22em; }
-.studio-brand small { display: block; font-size: 8px; letter-spacing: .17em; color: var(--muted); margin-top: 6px; }
+.telemetry-brand strong { font-size: 12px; letter-spacing: .22em; }
+.telemetry-brand small { display: block; font-size: 8px; letter-spacing: .17em; color: var(--muted); margin-top: 6px; }
 .local-badge { font-size: 9px; letter-spacing: .12em; color: var(--muted); }
 .local-badge::before { content: '●'; font-size: 7px; color: #759568; margin-right: 8px; }
-.studio-shell { display: grid; grid-template-columns: 300px minmax(0, 1fr); }
-.studio-sidebar { position: sticky; top: 88px; align-self: start; max-height: calc(100svh - 88px); overflow-y: auto; scrollbar-width: thin; padding: 34px 25px 40px 32px; border-right: 1px solid var(--line); }
+.telemetry-shell { display: grid; grid-template-columns: 300px minmax(0, 1fr); }
+.telemetry-sidebar { position: sticky; top: 88px; align-self: start; max-height: calc(100svh - 88px); overflow-y: auto; scrollbar-width: thin; padding: 34px 25px 40px 32px; border-right: 1px solid var(--line); }
 .kicker { color: var(--muted); font-size: 9px; font-weight: 600; letter-spacing: .14em; margin: 0 0 17px; }
-.studio-sidebar h1 { font-size: 37px; line-height: 1.04; }
-.studio-sidebar h1::after { content: ''; }
+.telemetry-sidebar h1 { font-size: 37px; line-height: 1.04; }
+.telemetry-sidebar h1::after { content: ''; }
 .intro { font-size: 12px; line-height: 1.65; color: var(--muted); margin: 17px 0 23px; }
 .file-drop { border: 1px dashed var(--accent); border-radius: 7px; background: var(--accent-soft); padding: 18px 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; }
 .file-drop > span { font-size: 27px; color: var(--accent); }
@@ -36,10 +36,9 @@ input[type='search'] { width: 100%; border: 1px solid var(--line); border-radius
 .format-help pre { overflow: auto; font-size: 10px; line-height: 1.7; padding: 10px; background: var(--field); }
 .format-help a { color: var(--accent); font-size: 11px; }
 #load-paste { width: 100%; margin-top: 10px; }
-.studio-content { min-width: 0; padding: 34px 32px; }
+.telemetry-content { min-width: 0; padding: 34px 32px; }
 .dataset-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; padding-bottom: 25px; }
 .dataset-header h2 { font-family: 'Newsreader Variable', Georgia, serif; font-size: 35px; font-weight: 450; letter-spacing: -.035em; margin: 0; overflow-wrap: anywhere; }
-#dataset-meta { font-size: 11px; line-height: 1.6; color: var(--muted); margin: 12px 0 0; }
 .dataset-badge { flex-shrink: 0; font-size: 8px; letter-spacing: .1em; color: var(--accent); background: var(--accent-soft); border: 1px solid var(--line); border-radius: 4px; padding: 8px; }
 .plot-toolbar { display: flex; align-items: center; gap: 22px; border-block: 1px solid var(--line); padding: 12px 0; flex-wrap: wrap; }
 .check-label { display: flex; align-items: center; gap: 8px; font-size: 11px; cursor: pointer; }
@@ -54,11 +53,39 @@ input[type='search'] { width: 100%; border: 1px solid var(--line); border-radius
 .plot-card { min-width: 0; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); overflow: hidden; }
 .plot-heading { display: flex; align-items: baseline; gap: 12px; padding: 18px 20px 0; }
 .plot-heading h3 { font-size: 12px; font-weight: 500; margin: 0; overflow-wrap: anywhere; }
-.plot-heading > span { font: 16px 'Newsreader Variable', Georgia, serif; color: var(--accent); }
 .chart { height: 260px; width: 100%; }
 .plot-stats { font-size: 8px; letter-spacing: .045em; font-variant-numeric: tabular-nums; color: var(--muted); border-top: 1px solid var(--line); margin: 0 20px; padding: 12px 0; white-space: pre-wrap; }
 .empty-selection { text-align: center; padding: 100px 20px; border: 1px dashed var(--line); border-radius: 8px; }
 .empty-selection h3 { font: 32px 'Newsreader Variable', Georgia, serif; margin: 0 0 15px; }
 .empty-selection p { font-size: 12px; color: var(--muted); }
-@media (max-width: 1120px) { .studio-shell { grid-template-columns: 260px minmax(0, 1fr); } .studio-sidebar { padding: 28px 20px; } .studio-content { padding: 28px 22px; } .plot-grid { grid-template-columns: minmax(0, 1fr); } .layout-label { margin-left: 0; } }
-@media (max-width: 700px) { .studio-nav { height: 74px; padding: 0 20px; gap: 12px; } .local-badge { display: none; } .studio-brand strong { font-size: 10px; } .studio-shell { display: flex; flex-direction: column; } .studio-sidebar { position: static; max-height: none; width: 100%; border-right: 0; border-bottom: 1px solid var(--line); padding: 28px 20px; } .studio-sidebar h1 { font-size: 38px; } #quantity-list { max-height: 200px; } .studio-content { padding: 28px 15px; } .dataset-header { flex-direction: column; gap: 12px; } .dataset-header h2 { font-size: 32px; } .plot-toolbar { gap: 14px; } }
+
+/* Keep controls and labels aligned even inside the shared details styles. */
+.telemetry-data .file-drop { display:flex; margin:16px 0 0; }
+.telemetry-data .quantity-option { display:flex; margin:0; line-height:1.5; }
+.telemetry-sidebar .check-label { margin:0; line-height:1.5; }
+.telemetry-sidebar input[type='checkbox'] { flex:0 0 auto; margin:0; }
+.telemetry-sidebar select, .telemetry-sidebar input, .telemetry-sidebar textarea { max-width:100%; min-width:0; }
+.plot-heading { padding:8px 22px 0 65px; align-items:baseline; }
+.plot-heading h3 { line-height:1.5; }
+.plot-stats { margin:0 12px; padding:14px 0 0; line-height:1.6; overflow-wrap:anywhere; }
+#render-status:empty { display:none; }
+
+/* Let long names and translated controls shrink and wrap inside the rail. */
+.telemetry-shell :is(.telemetry-sidebar,.telemetry-content,.dataset-header,.plot-toolbar,.telemetry-data,.quantity-panel,.small-actions,.section-heading,.plot-heading) { min-width:0; }
+.telemetry-sidebar :is(h2,p,label,summary,button,.dataset-badge) { overflow-wrap:anywhere; }
+.telemetry-sidebar :is(button,select,input,textarea) { box-sizing:border-box; max-width:100%; }
+.telemetry-sidebar button { min-width:0; white-space:normal; line-height:1.5; }
+.telemetry-sidebar .small-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+.telemetry-sidebar .small-actions button { width:100%; }
+.telemetry-sidebar .layout-label { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,120px); }
+.telemetry-sidebar .layout-label select { width:100%; }
+.telemetry-sidebar .section-heading { flex-wrap:wrap; gap:8px; }
+.telemetry-sidebar .quantity-option span { min-width:0; }
+.telemetry-sidebar summary::after { flex-shrink:0; }
+.telemetry-sidebar .dataset-badge { max-width:100%; }
+.telemetry-sidebar input[type='file'] { width:100%; }
+.telemetry-sidebar .file-drop { text-align:center; }
+.plot-heading h3 { min-width:0; max-width:100%; }
+.empty-selection { overflow-wrap:anywhere; }
+@media (max-width: 1120px) { .telemetry-shell { grid-template-columns: 260px minmax(0, 1fr); } .telemetry-sidebar { padding: 28px 20px; } .telemetry-content { padding: 28px 22px; } .plot-grid { grid-template-columns: minmax(0, 1fr); } .layout-label { margin-left: 0; } }
+@media (max-width: 700px) { .telemetry-nav { height: 74px; padding: 0 20px; gap: 12px; } .local-badge { display: none; } .telemetry-brand strong { font-size: 10px; } .telemetry-shell { display: flex; flex-direction: column; } .telemetry-sidebar { position: static; max-height: none; width: 100%; border-right: 0; border-bottom: 1px solid var(--line); padding: 28px 20px; } .telemetry-sidebar h1 { font-size: 38px; } #quantity-list { max-height: 200px; } .telemetry-content { padding: 28px 15px; } .dataset-header { flex-direction: column; gap: 12px; } .dataset-header h2 { font-size: 32px; } .plot-toolbar { gap: 14px; } }

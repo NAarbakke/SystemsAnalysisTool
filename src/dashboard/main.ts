@@ -52,11 +52,11 @@ function loadDataset(next: Dataset, name: string, demo: boolean) {
   data = next; timeColumn = defaultTime(data); selected = new Set(data.columns.filter(c => c !== timeColumn)); zoom = undefined;
   timeSelect.replaceChildren(...data.columns.map(column => new Option(column, column)));
   timeSelect.value = timeColumn;
-  get('dataset-name').textContent = name;
-  get('dataset-kind').textContent = demo ? 'SYNTHETIC DEMO' : 'LOCAL FILE';
-  get('dataset-meta').textContent = `${data.rows.toLocaleString()} samples · ${data.columns.length - 1} quantities · ${demo ? 'Illustrative signals, not a physical flight simulation' : 'Values and units as supplied'}`;
+  get('dataset-name').textContent = demo ? '' : name;
+  get('dataset-name').hidden = demo;
+  get('dataset-header').hidden = demo;
   get<HTMLInputElement>('quantity-search').value = '';
-  message(data.omitted.length ? `Loaded. Skipped nonnumeric or empty columns: ${data.omitted.join(', ')}.` : 'Ready. Select quantities to explore.');
+  message(data.omitted.length ? `Skipped columns: ${data.omitted.join(', ')}.` : '');
   listQuantities(); scheduleRender();
 }
 
@@ -97,26 +97,25 @@ async function renderPlots() {
     const card = document.createElement('article'); card.className = 'plot-card';
     const heading = document.createElement('div'); heading.className = 'plot-heading';
     const title = document.createElement('h3'); title.textContent = column;
-    const number = document.createElement('span'); number.textContent = String(index + 1).padStart(2, '0');
-    heading.append(number, title);
+    heading.append(title);
     const plot = document.createElement('div'); plot.className = 'chart'; plot.setAttribute('aria-label', `${column} versus ${timeColumn}`);
     const valid = data.values[column].filter((v): v is number => v !== null);
     let min = Infinity, max = -Infinity;
     for (const v of valid) { if (v < min) min = v; if (v > max) max = v; }
     const footer = document.createElement('p'); footer.className = 'plot-stats';
-    footer.textContent = `MIN ${format(min)}    /    MAX ${format(max)}    /    ${valid.length.toLocaleString()} valid samples`;
+    footer.textContent = `MIN ${format(min)}    /    MAX ${format(max)}`;
     card.append(heading, plot, footer); grid.append(card);
     const samples = plotSamples(x, data.values[column]);
     const graph = await Plotly.newPlot(plot, [{
       type: 'scatter', mode: markers.checked ? 'lines+markers' : 'lines', x: samples.x, y: samples.y,
-      line: { color: dark ? ['#f1a17f', '#8ac9cd', '#b7c98a', '#c5a7e0', '#e1b569', '#8ebf9d'][index % 6] : colors[index % 6], width: 1.8 },
+      line: { color: (style.getPropertyValue('--series-secondary').trim() ? [style.getPropertyValue('--accent').trim(),style.getPropertyValue('--series-secondary').trim()][index % 2] : '') || (dark ? ['#f1a17f', '#8ac9cd', '#b7c98a', '#c5a7e0', '#e1b569', '#8ebf9d'][index % 6] : colors[index % 6]), width: 1.8 },
       marker: { size: 3 }, connectgaps: false,
       hovertemplate: '%{x:.6g}<br>%{y:.6g}<extra></extra>',
     }], {
       paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
       font: { family: style.getPropertyValue('--font-body').trim() || 'DM Sans Variable, sans-serif', color: ink, size: 11 },
       margin: { t: 25, r: 22, b: 52, l: 65 }, height: 260,
-      xaxis: { title: { text: timeColumn, standoff: 12 }, gridcolor: line, zerolinecolor: line, ...(zoom ? { range: zoom } : { autorange: true }) },
+      xaxis: { title: { text: timeColumn, standoff: 12 }, automargin: true, gridcolor: line, zerolinecolor: line, ...(zoom ? { range: zoom } : { autorange: true }) },
       yaxis: { gridcolor: line, zerolinecolor: line, automargin: true },
       showlegend: false, hovermode: 'closest', dragmode: 'zoom',
     }, { responsive: true, displaylogo: false, scrollZoom: false, displayModeBar: 'hover',
@@ -128,7 +127,7 @@ async function renderPlots() {
     graph.on('plotly_relayout', (event: PlotRelayoutEvent) => void syncZoom(graph, event));
     await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
   }
-  if (revision === current) renderStatus.textContent = data.rows > 5000 ? 'Overview uses a reduced set of samples with per-bin minima and maxima. Statistics use all samples; closely spaced gaps may be simplified.' : `${chosen.length} plots · All samples shown`;
+  if (revision === current) renderStatus.textContent = data.rows > 5000 ? 'Reduced samples · Full-data statistics' : '';
 }
 
 function format(value: number) { return Number.isFinite(value) ? Number(value.toPrecision(6)).toLocaleString('en-US', { maximumSignificantDigits: 6 }) : '—'; }

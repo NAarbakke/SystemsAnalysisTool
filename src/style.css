@@ -113,9 +113,16 @@ details label { display: block; margin: 14px 0 7px; font-size: 10px; color: var(
 .dock-caption { display: flex; flex-direction: column; gap: 7px; font-size: 11px; color: var(--muted); }
 .dock-caption .eyebrow { margin: 0; font-size: 8px; color: var(--ink); }
 .cesium-viewer-bottom { left: auto !important; right: 12px; bottom: 120px !important; font-size: 9px !important; }
+.cesium-credit-logoContainer { display: none !important; }
 #error { position: absolute; z-index: 6; left: 50%; top: 45%; transform: translate(-50%, -50%); background: var(--surface); color: #a93626; border: 1px solid var(--line); padding: 24px; border-radius: 8px; max-width: 460px; width: calc(100% - 40px); line-height: 1.6; }
 #rotation-error, #replay-message.invalid, #flight-message.invalid { color: #a93626; font-size: 11px; }
 [data-theme='dark'] :is(#error, #rotation-error, #replay-message.invalid, #flight-message.invalid) { color: #ffac96; }
+#map-status[data-error='true'] { color: var(--accent); }
+#save-map-view { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+#save-map-view label { width: 100%; }
+#map-view-name { min-width: 0; flex: 1; background: var(--field); color: var(--ink); border: 1px solid var(--line); border-radius: 4px; padding: 10px; font-size: 12px; }
+.saved-view-row { display: flex; gap: 6px; margin-top: 6px; }
+.saved-view-row button:first-child { flex: 1; text-align: left; overflow-wrap: anywhere; }
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 noscript { position: absolute; top: 50%; left: 30px; }
 @media (max-width: 1050px) {
@@ -155,6 +162,14 @@ noscript { position: absolute; top: 50%; left: 30px; }
   .cesium-viewer-bottom { bottom: 4px !important; right: 4px; }
 }
 @media (prefers-reduced-motion: reduce) { button { transition: none; } }
-#signals-view { min-height: calc(100svh - 88px); }
+#telemetry-view { min-height: calc(100svh - 88px); }
+#assembly-import-status:empty, #replay-message:empty, #flight-message:empty, #import-status:empty, #render-status:empty, #map-status:empty, #source-network:empty, #saved-view-status:empty { display:none; }
+@media (min-width:761px) { .control-dock, .flight-controls { grid-template-columns:220px minmax(160px,1fr); } }
+.assembly-file-label { display:block; font-size:11px; margin:14px 0 7px; color:var(--muted); }
+#assembly-import-status { font-size:10px; line-height:1.5; margin:8px 0 0; overflow-wrap:anywhere; }
+#assembly-import-status[data-error=true] { color:var(--accent); }
+.assembly-import-help { margin:0 0 18px; padding:0 0 14px; border-top:0; border-bottom:1px solid var(--line); }
+.assembly-import-help a { color:var(--accent); font-size:11px; }
+@media (min-width:761px) and (max-width:1200px) { .view-menu { gap:14px; padding-inline:22px; } .nav-tools .local-status { display:none; } .mode-switch button { padding-inline:11px; } }
 .view-menu { position: sticky; top: 0; z-index: 10; }
 @media (max-width: 760px) { .mode-switch button { padding-inline: 8px; } .tab-number { display: none; } }

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { parseMapConfig } from '../src/maps/config.ts';
+import { parseMapConfig } from '../src/basemap-config.ts';
 
 const defaults = JSON.parse(await readFile(new URL('../static/data/maps/sources.json', import.meta.url), 'utf8'));
 test('published map sources include a detailed satellite, streets and offline fallback', () => {

@@ -1,6 +1,6 @@
 import 'cesium/Build/Cesium/Widgets/widgets.css';
 import {
-  Viewer, ImageryLayer, UrlTemplateImageryProvider, GeographicTilingScheme, EllipsoidTerrainProvider,
+  Viewer, EllipsoidTerrainProvider,
   Cartesian3, JulianDate, ClockRange, ClockStep, Color, HeadingPitchRange,
   CallbackPositionProperty, CallbackProperty, VelocityOrientationProperty, SampledProperty, Quaternion,
   Transforms, Matrix3, Matrix4, BoundingSphere, ModelGraphics, Cartesian2, Ion,
@@ -12,18 +12,13 @@ import { exampleFlight, parseFlight, type FlightSample } from './flight-data.ts'
 import { createFlightPath } from './flight-path.ts';
 import { parseStateVector, stateHeader, exampleState, interpolateState, type StateOptions } from './state-vector.ts';
 import { addNotamLayer } from './notam-layer.ts';
+import { attachBasemap } from './basemap.ts';
 
 export async function createFlyover() {
   const message = document.querySelector<HTMLElement>('#flight-message')!;
-  message.textContent = 'Loading local Earth map…';
   Ion.defaultAccessToken = '';
-  const imagery = new UrlTemplateImageryProvider({
-    url: new URL('./earth/{z}/{x}/{y}.jpg', document.baseURI).href.replaceAll('%7B', '{').replaceAll('%7D', '}'),
-    tilingScheme: new GeographicTilingScheme(), maximumLevel: 5,
-    credit: 'NASA Blue Marble Next Generation · July 2004',
-  });
   const viewer = new Viewer('globe', {
-    baseLayer: new ImageryLayer(imagery), terrainProvider: new EllipsoidTerrainProvider(),
+    baseLayer: false, terrainProvider: new EllipsoidTerrainProvider(),
     baseLayerPicker: false, geocoder: false, animation: false, timeline: false,
     homeButton: false, sceneModePicker: false, navigationHelpButton: false,
     fullscreenButton: false, infoBox: false, selectionIndicator: false,
@@ -32,7 +27,6 @@ export async function createFlyover() {
     useBrowserRecommendedResolution: false,
     msaaSamples: 4,
   });
-  viewer.resolutionScale = Math.min(1, 2 / devicePixelRatio);
   viewer.scene.postProcessStages.fxaa.enabled = true;
   viewer.scene.globe.enableLighting = false;
   viewer.scene.skyAtmosphere!.show = true;
@@ -57,12 +51,8 @@ export async function createFlyover() {
     stateFields.velocity.querySelector<HTMLOptionElement>('option[value="body"]')!.disabled = dof.value !== '6';
     if (dof.value !== '6' && stateFields.velocity.value === 'body') stateFields.velocity.value = 'enu';
     document.querySelector('#flight-header')!.textContent = dof.value === 'trajectory' ? 'time,latitude,longitude,altitude' : stateHeader(stateOptions());
-    document.querySelector('#flight-attitude-help')!.textContent = dof.value === 'trajectory'
-      ? 'Position series may include roll,pitch,yaw (ZYX degrees in ENU). Without attitude, the vehicle faces along the route.'
-      : dof.value === '3' ? 'Velocity is Earth-relative. The model faces along the supplied velocity; roll is unspecified.'
-      : 'Attitude rotates body coordinates into the selected reference frame. Quaternion order: x,y,z,w (normalized on load). p,q,r are body-axis angular rates. Rates are displayed, not integrated.';
-    document.querySelector('#flight-format-help')!.textContent = 'Time: seconds. Position: metres or latitude/longitude degrees and ellipsoid altitude metres. Velocity: m/s, Earth-relative. Match the header below.';
-    message.textContent = 'Format changed. Load flight to apply it, or Example for this format. The previous replay is paused.';
+    document.querySelector('#flight-format-help')!.textContent = 's · metres / degrees · m/s (Earth-relative)';
+    message.textContent = 'Unapplied format changes · Paused';
   }
   [dof, ...Object.values(stateFields)].forEach(input => input.addEventListener('change', describeFormat));
   models.forEach(model => picker.add(new Option(model.title, model.id)));
@@ -211,7 +201,7 @@ export async function createFlyover() {
       updateReadout(); overview();
       message.textContent = `${samples.length} samples loaded · ${samples[0].angles ? 'imported orientation' : 'faces along route'} · 1× playback`;
       message.classList.remove('invalid');
-      if (options) message.textContent = `${samples.length} samples loaded · ${options.dof}DOF · ${options.position.toUpperCase()} position · ${options.velocity.toUpperCase()} velocity${options.dof === '6' ? ` · ${options.attitude}, ${options.frame.toUpperCase()}, ${options.body.toUpperCase()}` : ''}. Supplied states are replayed; velocities and rates are not integrated.`;
+      if (options) message.textContent = `${samples.length} samples loaded · ${options.dof}DOF · ${options.position.toUpperCase()} position · ${options.velocity.toUpperCase()} velocity${options.dof === '6' ? ` · ${options.attitude}, ${options.frame.toUpperCase()}, ${options.body.toUpperCase()}` : ''}.`;
     } catch (cause) {
       message.textContent = cause instanceof Error ? cause.message : 'Could not load flight.';
       message.classList.add('invalid');
@@ -243,7 +233,7 @@ export async function createFlyover() {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
     if (file.size > 5_000_000) { message.textContent = 'Use a CSV smaller than 5 MB.'; return; }
-    try { csv.value = await file.text(); message.textContent = 'File opened locally. Click Load flight.'; }
+    try { csv.value = await file.text(); message.textContent = 'File ready'; }
     catch { message.textContent = 'Could not read CSV file.'; }
   });
   viewer.clock.onTick.addEventListener(() => {
@@ -263,6 +253,7 @@ export async function createFlyover() {
   csv.value = exampleFlight; loadFlight(exampleFlight);
   await updateModel();
   await addNotamLayer(viewer);
+  await attachBasemap(viewer);
   document.querySelectorAll<HTMLButtonElement | HTMLInputElement>('#flyover-view button, #flight-time').forEach(control => { control.disabled = false; });
   return { setVisible(value: boolean) {
     visible = value; pause(); viewer.useDefaultRenderLoop = value;

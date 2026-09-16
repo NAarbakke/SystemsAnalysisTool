@@ -28,9 +28,9 @@
       "network": "intranet",
       "url": "./earth/{z}/{x}/{y}.jpg",
       "projection": "geographic",
-      "maximumLevel": 5,
+      "maximumLevel": 6,
       "credit": "NASA Blue Marble Next Generation · July 2004",
-      "description": "Bundled world overview, about 2.4 km per pixel at the equator. Coarse fallback only; no detailed ground imagery."
+      "description": "Bundled world overview, about 1.2 km per pixel at the equator (the full resolution of the bundled NASA source). Coarse fallback only; no detailed ground imagery."
     }
   ]
 }

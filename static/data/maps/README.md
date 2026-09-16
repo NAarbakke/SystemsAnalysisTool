@@ -1,10 +1,10 @@
-# Civilian map viewer
+# Civilian basemap sources
 
-Open http://localhost:3000/maps.html. This is a separate map-only page, with no flight replay or vehicle data. Choose a map source; the camera stays in place so the same area can be compared. The View menu includes Earth, Europe and two waterfront detail views. Source selection persists locally. High display quality is the default; Native uses the screen's full pixel density.
+Configures the basemap under Flyover's globe, in the **Map source** panel. Choose a source; the camera stays in place so the same area can be compared. Source selection and saved camera views persist locally in this browser. High display quality is the default; Native uses the screen's full pixel density.
 
 ## What actually improves resolution
 
-The original NASA Blue Marble set ends at geographic zoom 5: 16,384 pixels around the equator, about 2.4 km per pixel. Increasing canvas size cannot invent ground detail. The new viewer streams a complete tile pyramid from the selected source and requests more detailed tiles as you zoom. Esri's tile metadata determines its maximum level; no level-5 cap is applied. The static globe requests finer detail with a screen-space error of 1 pixel. All layers use a smooth ellipsoid; this does not add elevation or 3D buildings.
+The bundled NASA Blue Marble tile pyramid ends at geographic zoom 6: 32,768 pixels around the equator, about 1.2 km per pixel — the full resolution of the bundled source photo. Increasing canvas size cannot invent ground detail. The new viewer streams a complete tile pyramid from the selected source and requests more detailed tiles as you zoom. Esri's tile metadata determines its maximum level; no level-5 cap is applied. The static globe requests finer detail with a screen-space error of 1 pixel. All layers use a smooth ellipsoid; this does not add elevation or 3D buildings.
 
 | Source | Use | Access / limits |
 | --- | --- | --- |

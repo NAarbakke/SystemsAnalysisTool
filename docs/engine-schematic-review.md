@@ -1,12 +1,16 @@
 ﻿# Making the engine schematics more realistic
 
-## Current direction: 3D cutaways
+## Current direction: 2D drawings with a gas-path chart
 
-The flat SVG redesign below was rejected in review. The default engine display now
-uses orbitable Three.js geometry, metallic shading, environment lighting, cast
-shadows and visible cut faces. All three engine choices have 3D representations.
-The technical-drawing selector has been removed. SVG remains only as a fallback
-when WebGL cannot start. The previous implementation notes below are historical.
+The 3D cutaways have been removed. The engine display is 2D SVG again, and the
+turbojet and turbofan use one design: a full mirrored section with a chart
+underneath tracing pressure and temperature along the same axial stations, tied
+together by station markers 0/2/3/4/5/9 and dotted drop lines. Both traces are
+qualitative and carry no values.
+
+This design was chosen from twenty drawn proposals; the others remain available as
+alternatives for the rocket diagrams. The notes below are from the earlier reviews
+and are kept for the design priorities they record.
 
 ## Previous SVG implementation (superseded)
 

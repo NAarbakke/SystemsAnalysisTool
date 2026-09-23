@@ -6,12 +6,11 @@
 <header class="engine-nav"><a href="./index.html">System Modelling Tool</a><span>Engines</span><div data-appearance-host></div></header>
 <main class="engine-dashboard">
  <header class="engine-toolbar">
-  <label class="model-picker">Model<select id="engine-model"><option value="turbofan">Civilian turbofan</option><option value="solid">Solid rocket · schematic</option><option value="liquid">Liquid rocket · schematic</option></select></label>
+  <label class="model-picker">Model<select id="engine-model"><option value="turbojet">Turbojet</option><option value="turbofan">Civilian turbofan</option><option value="solid">Solid rocket · schematic</option><option value="liquid">Liquid rocket · schematic</option></select></label>
   <span class="drawing-help">Select a section to explore</span>
  </header>
  <div class="diagram-layout">
   <section class="diagram-stage" aria-label="Engine diagram">
-   <div id="engine-3d" hidden aria-label="Interactive engine cutaway. Drag to orbit and scroll to zoom."></div>
    <svg id="engine-svg" viewBox="0 0 1200 560" aria-label="Selectable engine sections" data-drawing="shaded">
     <defs>
      <linearGradient id="metal" x1="0" y1="0" x2="0" y2="100%"><stop stop-color="#e0e3e3"/><stop offset=".32" stop-color="#9da7ae"/><stop offset=".6" stop-color="#6b767f"/><stop offset="1" stop-color="#36434e"/></linearGradient>

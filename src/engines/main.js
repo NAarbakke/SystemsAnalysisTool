@@ -3,27 +3,15 @@ import '@fontsource-variable/dm-sans';
 import '@fontsource-variable/newsreader';
 import '../theme.ts';
 import './style.css';
+import turbojet from '../../models/engine-diagrams/turbojet/model.js';
 import turbofan from '../../models/engine-diagrams/turbofan/model.js';
 import solid from '../../models/engine-diagrams/solid-rocket/model.js';
 import liquid from '../../models/engine-diagrams/liquid-rocket/model.js';
-import { createCutaway } from './cutaway.ts';
 
-const models = { turbofan, solid, liquid };
+const models = { turbojet, turbofan, solid, liquid };
 const $ = id => document.getElementById(id);
 const svg = $('engine-svg'), scene = $('engine-scene');
 let model, selected, scale = 1, offset = { x:0, y:0 }, drag;
-let cutaway;
-try {
- cutaway=createCutaway($('engine-3d'),id=>select(id),percent=>{
-  $('zoom-level').value=`${percent}%`;
-  $('zoom-out').disabled=percent<=33;$('zoom-in').disabled=percent>=357;
- });
- $('engine-3d').hidden=false;svg.hidden=true;
- document.querySelector('.drawing-help').textContent='Drag to orbit · Scroll to zoom · Select a component';
-} catch(error) {
- console.error('3D cutaway could not start',error);
- document.querySelector('.drawing-help').textContent='3D unavailable in this browser · Showing illustrated section';
-}
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 $('flow-toggle').checked = !reducedMotion.matches;
 function updateFlow() {
@@ -36,7 +24,6 @@ function renderView() {
  $('zoom-out').disabled = scale <= .35; $('zoom-in').disabled = scale >= 4;
 }
 function fitView(){
- if(cutaway){cutaway.fit();return;}
  // All authored diagrams share this viewBox; panels occupy separate layout space.
  scale=1;offset={x:0,y:0};
  renderView();
@@ -45,14 +32,12 @@ function point(event) {
  return new DOMPoint(event.clientX, event.clientY).matrixTransform(svg.getScreenCTM().inverse());
 }
 function zoom(factor, anchor = {x:600,y:280}) {
- if(cutaway){cutaway.zoom(factor);return;}
  const next = Math.min(4, Math.max(.35, scale * factor));
  offset = {x:anchor.x - (anchor.x-offset.x)*next/scale, y:anchor.y - (anchor.y-offset.y)*next/scale};
  scale=next; renderView();
 }
 function select(id) {
  selected = id === selected ? undefined : id;
- cutaway?.select(selected);
  document.querySelectorAll('[data-label]').forEach(el => el.classList.toggle('active', el.dataset.label === selected));
  const part = model.parts.find(part => part.id === selected);
  document.querySelectorAll('[data-part]').forEach(el => {
@@ -79,8 +64,9 @@ function loadModel(id) {
  $('reference-link').hidden = !model.reference;
  if(model.reference) $('reference-link').href = model.reference;
  svg.setAttribute('aria-label', `${model.name} selectable schematic`);
- if(cutaway)cutaway.load(model.id);else scene.innerHTML=renderDiagram(model);
- $('flow-toggle').closest('label').hidden = !!cutaway || !model.flow;
+ // Authored drawings carry their own markup and styling; the older models are composed from part geometry.
+ scene.innerHTML = model.svg || renderDiagram(model);
+ $('flow-toggle').closest('label').hidden = !model.flow;
  $('component-buttons').replaceChildren(...model.parts.map((part,index)=>{
   const button=document.createElement('button'); button.dataset.part=part.id;
   const number=document.createElement('span');number.textContent=String(index+1).padStart(2,'0');
@@ -126,4 +112,4 @@ window.addEventListener('message',event=>{
  document.body.dataset.visible=String(event.data.visible===true);updateFlow();
 });
 reducedMotion.addEventListener('change',()=>{if(reducedMotion.matches)$('flow-toggle').checked=false;updateFlow();});
-loadModel('turbofan');
+loadModel('turbojet');

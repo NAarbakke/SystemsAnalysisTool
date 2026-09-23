@@ -29,8 +29,8 @@
       <header>
         <label class="sr-only" for="model-picker">Choose model</label>
         <select id="model-picker" disabled></select>
-        <label class="assembly-file-label" for="assembly-file">Import assembly (.glb)</label>
-        <input id="assembly-file" type="file" accept=".glb,model/gltf-binary" disabled>
+        <label class="assembly-file-label" for="assembly-file">Import assembly (.glb, .stl, .step)</label>
+        <input id="assembly-file" type="file" accept=".glb,.stl,.stp,.step,model/gltf-binary,model/stl,model/step" disabled>
         <div class="assembly-import-help"><button id="assembly-example" type="button">Example GLB</button></div>
         <p id="assembly-import-status" class="coordinate-note" role="status"></p>
       </header>

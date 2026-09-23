@@ -21,7 +21,12 @@ For a tool such as [earthtojake/text-to-cad](https://github.com/earthtojake/text
 request a named assembly plus STEP and GLB outputs. Its CAD skill documents STEP
 as its primary output and GLB as an available output. Convert/export on the
 authoring workstation; copy the finished browser assets to the intranet host.
-The browser does not need a CAD kernel or converter.
+
+The viewer can now also open STEP directly: it bundles an OpenCascade wasm kernel
+(`occt-import-js`) that tessellates the solids in the browser. That path needs no
+conversion step, but it produces a flat list of solids rather than the component
+hierarchy, materials and instancing a GLB export preserves. GLB remains the better
+viewing copy for a structured assembly; STEP is the quicker path for a one-off look.
 
 ## What STEP preserves
 

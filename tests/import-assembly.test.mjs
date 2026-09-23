@@ -2,7 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {Box3,BoxGeometry,Group,Mesh,MeshStandardMaterial,Vector3} from 'three';
-import {assemblyFromScene,inspectGLB,loadImportedAssembly} from '../src/import-assembly.ts';
+import {assemblyFromScene,inspectGLB,loadImportedAssembly,loadImportedFile} from '../src/import-assembly.ts';
 
 function jsonGLB(json) {
   const source=Buffer.from(JSON.stringify(json)); const length=Math.ceil(source.length/4)*4;
@@ -38,4 +38,18 @@ test('loads the self-contained six-part GLB with names, materials and nested sup
   assert.equal(assembly.root.getObjectByName('Supports').children.length,4);
   assert.ok(assembly.parts.some(part=>part.mesh.name==='Base_plate'));
   assembly.setExplosion(.5); assembly.setExplosion(0); assert.ok(!assembly.bounds.isEmpty()); assembly.dispose();
+});
+test('reads a binary STL as one part and refuses unsupported extensions',async()=>{
+  const triangles=[[[0,0,0],[4,0,0],[0,4,0]],[[0,0,0],[4,0,0],[0,0,4]]];
+  const stl=Buffer.alloc(84+50*triangles.length); stl.writeUInt32LE(triangles.length,80);
+  triangles.forEach((corners,index)=>{
+    const start=84+50*index;
+    [[0,0,1],...corners].flat().forEach((value,i)=>stl.writeFloatLE(value,start+4*i));
+  });
+  const {assembly}=await loadImportedFile(stl.buffer.slice(stl.byteOffset,stl.byteOffset+stl.byteLength),'bracket.stl');
+  assert.equal(assembly.parts.length,1);
+  assert.equal(assembly.parts[0].mesh.name,'bracket');
+  assert.ok(!assembly.bounds.isEmpty());
+  assembly.dispose();
+  await assert.rejects(async()=>loadImportedFile(new ArrayBuffer(8),'part.iges'),/\.glb, \.stl/);
 });

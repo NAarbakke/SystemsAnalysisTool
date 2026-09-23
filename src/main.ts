@@ -178,11 +178,12 @@ try {
     assemblyFile.disabled = true; importExample.disabled = true; picker.disabled = true;
     importStatus.dataset.error = 'false'; importStatus.textContent = 'Reading assembly…';
     try {
-      const { loadImportedAssembly } = await import('./import-assembly.ts');
-      const loaded = await loadImportedAssembly(await read());
+      const { loadImportedFile } = await import('./import-assembly.ts');
+      const loaded = await loadImportedFile(await read(), name);
       if (disposed) { loaded.assembly.dispose(); return; }
       const previousImport = imported, previousModel = model;
-      const next: ModelDefinition = { id:'local-import', title:name.replace(/\.glb$/i, ''), description:'Imported GLB', view:[7,4,9], create:() => loaded.assembly };
+      const format = (name.match(/\.(glb|stl|stp|step)$/i)?.[1] || '').toUpperCase().replace('STP', 'STEP');
+      const next: ModelDefinition = { id:'local-import', title:name.replace(/\.(glb|stl|stp|step)$/i, ''), description:`Imported ${format}`, view:[7,4,9], create:() => loaded.assembly };
       imported = { definition:next, assembly:loaded.assembly };
       let option = picker.querySelector<HTMLOptionElement>('option[value="local-import"]');
       if (!option) { option = new Option(next.title, 'local-import'); picker.add(option); }
@@ -200,9 +201,10 @@ try {
   }
   assemblyFile.addEventListener('change', () => {
     const file = assemblyFile.files?.[0]; if (!file) return;
-    if (!/\.glb$/i.test(file.name) || file.size > 100 * 1024 * 1024) {
-      importStatus.dataset.error = 'true'; importStatus.textContent = 'Choose a self-contained .glb file smaller than 100 MB.'; assemblyFile.value = ''; return;
+    if (!/\.(glb|stl|stp|step)$/i.test(file.name) || file.size > 100 * 1024 * 1024) {
+      importStatus.dataset.error = 'true'; importStatus.textContent = 'Choose a .glb, .stl or .step file smaller than 100 MB.'; assemblyFile.value = ''; return;
     }
+    if (/\.(stp|step)$/i.test(file.name)) importStatus.textContent = 'Reading STEP file. The CAD kernel loads on first use.';
     void importModel(() => file.arrayBuffer(), file.name);
   });
   importExample.addEventListener('click', () => { void importModel(async () => {

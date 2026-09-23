@@ -1,8 +1,11 @@
-import { Box3, Group, LoadingManager, Matrix3, Mesh, Texture, Vector3, type Material, type Object3D } from 'three';
+import { Box3, BufferAttribute, BufferGeometry, Color, Group, LoadingManager, Matrix3, Mesh, MeshStandardMaterial, Texture, Vector3, type Material, type Object3D } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import type { Assembly, AssemblyPart } from './assembly.ts';
 
 export const MAX_IMPORT_BYTES = 100 * 1024 * 1024;
+const IMPORTABLE = /\.(glb|stl|stp|step)$/i;
+
+export function isImportable(name: string) { return IMPORTABLE.test(name); }
 
 /** Reject unsupported/external resources before asking the loader to allocate geometry. */
 export function inspectGLB(data: ArrayBuffer) {
@@ -103,6 +106,52 @@ export function assemblyFromScene(content: Group): Assembly {
   for (const amount of [0, 1]) { setExplosion(amount); bounds.union(new Box3().setFromObject(root)); }
   setExplosion(0);
   return { root, parts, bounds, setExplosion, dispose: () => disposeImported(root) };
+}
+
+/** STEP solids keep their own colours; STL carries a single untinted shell. */
+function meshMaterial(color?: number[]) {
+  return new MeshStandardMaterial({ color: color ? new Color(color[0], color[1], color[2]) : 0x93a0ac, metalness: .25, roughness: .55 });
+}
+
+/** STL and STEP arrive as tessellated geometry, without glTF's scene graph, materials or animations. */
+export async function loadTessellatedAssembly(data: ArrayBuffer, name: string) {
+  if (data.byteLength > MAX_IMPORT_BYTES) throw new Error(`Use a file smaller than ${MAX_IMPORT_BYTES / 1024 / 1024} MB. Reduce export tessellation.`);
+  const content = new Group();
+  if (/\.stl$/i.test(name)) {
+    const { STLLoader } = await import('three/addons/loaders/STLLoader.js');
+    let geometry: BufferGeometry;
+    try { geometry = new STLLoader().parse(data); }
+    catch { throw new Error('This STL could not be read. Export it again as binary or ASCII STL.'); }
+    if (!geometry.getAttribute('normal')) geometry.computeVertexNormals();
+    const mesh = new Mesh(geometry, meshMaterial());
+    mesh.name = name.replace(/\.stl$/i, '') || 'Imported shell';
+    content.add(mesh);
+  } else {
+    // The CAD kernel is a 7 MB wasm module, so it loads only when a STEP file is opened.
+    const [{ default: startKernel }, { default: kernelWasm }] = await Promise.all([
+      import('occt-import-js'), import('occt-import-js/dist/occt-import-js.wasm?url'),
+    ]);
+    const kernel = await startKernel({ locateFile: () => kernelWasm });
+    const result = kernel.ReadStepFile(new Uint8Array(data), null);
+    if (!result?.success || !result.meshes?.length) throw new Error('No solid geometry was found in this STEP file. Export solids rather than sketches or surfaces.');
+    for (const [index, solid] of result.meshes.entries()) {
+      const geometry = new BufferGeometry();
+      geometry.setAttribute('position', new BufferAttribute(Float32Array.from(solid.attributes.position.array), 3));
+      if (solid.attributes.normal?.array?.length) geometry.setAttribute('normal', new BufferAttribute(Float32Array.from(solid.attributes.normal.array), 3));
+      if (solid.index?.array?.length) geometry.setIndex(new BufferAttribute(Uint32Array.from(solid.index.array), 1));
+      if (!solid.attributes.normal?.array?.length) geometry.computeVertexNormals();
+      const mesh = new Mesh(geometry, meshMaterial(solid.color));
+      mesh.name = solid.name || `Solid ${index + 1}`;
+      content.add(mesh);
+    }
+  }
+  try { return { assembly: assemblyFromScene(content), animationsIgnored: false }; }
+  catch (error) { disposeImported(content); throw error; }
+}
+
+export function loadImportedFile(data: ArrayBuffer, name: string) {
+  if (!isImportable(name)) throw new Error('Choose a .glb, .stl, .stp or .step file.');
+  return /\.glb$/i.test(name) ? loadImportedAssembly(data) : loadTessellatedAssembly(data, name);
 }
 
 export async function loadImportedAssembly(data: ArrayBuffer) {

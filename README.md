@@ -26,8 +26,8 @@ Installing dependencies needs internet access or a prepared npm cache. The build
 
 | Tab | What you can do |
 | --- | --- |
-| **Assembly** | Rotate 3D models, separate parts, select components and open your own GLB assembly. |
-| **Engines** | Explore selectable sections of a civilian turbofan and two conceptual rocket diagrams. |
+| **Assembly** | Rotate 3D models, separate parts, select components and open your own GLB, STL or STEP assembly. |
+| **Engines** | Explore selectable sections of a turbojet, a civilian turbofan and two conceptual rocket diagrams. |
 | **Flyover** | Play an example route or load flight data on a globe. Choose satellite, street or offline basemaps and save camera views. |
 | **Telemetry** | Import CSV/JSON simulation data, choose signals, zoom plots and export PNG images. |
 
@@ -37,20 +37,20 @@ Use **Appearance** to change light/dark mode and fonts. Preferences are remember
 
 Choose a model, drag to rotate the view and scroll to zoom. Use **Part separation** to spread the parts. Click a part or choose it from **Components** to inspect it.
 
-The built-in models include a precision spindle, industrial electric motor, civilian turbofan and two illustrative vehicle exteriors. Use **Import assembly (.glb)** for your own model, or **Example GLB** to try a sample. See the [SolidWorks/GLB import guide](static/data/assembly-import/README.md) for export settings.
+The built-in models include a precision spindle, industrial electric motor, civilian turbofan and two illustrative vehicle exteriors. Use **Import assembly (.glb, .stl, .step)** for your own model, or **Example GLB** to try a sample. GLB keeps its component hierarchy and materials, STEP arrives as separate named solids, and STL arrives as a single shell. See the [assembly import guide](static/data/assembly-import/README.md) for export settings.
 
 ### Engines
 
-Choose an engine from **Model**. Drag the shaded 3D cutaway to orbit it, scroll or use **+ / −** to zoom, and choose **Fit** to reset the view. Click a visible part or use the **Components** buttons to inspect it. The buttons also support keyboard selection.
+Choose an engine from **Model**. Drag the drawing to pan it, scroll or use **+ / −** to zoom, and choose **Fit** to reset the view. Click a part or use the **Components** buttons to inspect it. The buttons also support keyboard selection.
 
-These are illustrative cutaways, not to scale, with component explanations rather than operating telemetry. They use metallic shading, lighting and visible cut surfaces. The turbofan adds nested shafts and bearing supports to the existing civilian display model. If WebGL cannot start, a simplified SVG illustration is shown instead.
+These are 2D schematics, not to scale, with component explanations rather than operating telemetry. The turbojet and turbofan drawings pair a full section with a chart tracing pressure and temperature along the same axial stations. Both curves are qualitative and carry no values.
 
 See the [engine design notes](docs/engine-schematic-review.md) for the implemented improvements and reference limits.
 
 ### Flyover and Telemetry
 
 - **Flyover:** try Play first. To use your data, open **Load a flight**, choose its input format and load a CSV. Use **Example** for a matching sample. See [sample files and settings](models/examples/README.md) and the [detailed replay reference](docs/replay-reference.md). Under **Map source**, choose satellite, streets or the offline NASA overview; **Saved views** remembers camera positions in this browser. See [map sources](static/data/maps/README.md).
-- **Telemetry:** import CSV/JSON or paste a table, then choose which quantities to plot. See the [data format and Python export guide](static/data/dashboard/README.md).
+- **Telemetry:** import CSV/JSON or paste a table, then choose which quantities to plot. Quantities whose names share a base and a unit suffix (`position_x_m`, `position_y_m`, `position_z_m`) are drawn on one chart with a legend, so a vector reads as one picture. The **Overview** strip above the charts covers the whole run: drag inside it to set the time range everywhere. Hovering any chart draws one time crosshair across all of them and fills the **at cursor** column in every header. See the [data format and Python export guide](static/data/dashboard/README.md).
 
 ## Offline use and your data
 

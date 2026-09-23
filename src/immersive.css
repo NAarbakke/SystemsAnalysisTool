@@ -46,8 +46,9 @@
 :root[data-appearance] .dataset-header h2 { font-size:24px; }
 :root[data-appearance] .dataset-header .kicker { display:none; }
 :root[data-appearance] .plot-toolbar { position:fixed;top:195px;right:20px;z-index:6; }
-:root[data-appearance] .plot-card { background:var(--glass);border:1px solid var(--line);border-radius:12px;box-shadow:none;padding:18px 12px 14px; }
-:root[data-appearance] .plot-heading { padding:0 12px 12px; }
+:root[data-appearance] .plot-panel { padding:14px 12px 10px; }
+:root[data-appearance] .plot-panel.active { background:var(--glass);border:1px solid var(--line);border-radius:12px;box-shadow:none; }
+:root[data-appearance] .panel-head { padding:0 0 4px; }
 :root[data-appearance] .telemetry-content #render-status { margin:12px 0; }
 @media(max-width:760px) {
  :root[data-appearance] { --overlay-top:132px; }
@@ -110,7 +111,7 @@
 :root[data-appearance] #telemetry-view .telemetry-shell { position:absolute;inset:100px 20px 20px;display:grid;grid-template-columns:300px minmax(0,1fr);grid-template-rows:minmax(0,1fr);gap:20px;padding:0;min-height:0; }
 :root[data-appearance] #telemetry-view .telemetry-sidebar { position:relative;inset:auto;width:auto;height:100%;max-height:100%;min-height:0;padding:20px;overflow:auto;align-self:stretch; }
 :root[data-appearance] #telemetry-view .telemetry-content { position:relative;inset:auto;min-width:0;min-height:0;padding:0 4px 12px 0;overflow:auto; }
-:root[data-appearance] #telemetry-view .plot-heading { padding:4px 12px 14px; }
+:root[data-appearance] #telemetry-view .panel-head { padding:4px 0 6px; }
 :root[data-appearance] #telemetry-view .telemetry-data>summary { padding:2px 0 8px; }
 :root[data-appearance] #telemetry-view .plot-toolbar { padding:16px; }
 :root[data-appearance] #telemetry-view .telemetry-sidebar .small-actions { gap:8px; }

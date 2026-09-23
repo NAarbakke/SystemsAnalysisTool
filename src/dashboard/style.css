@@ -48,13 +48,32 @@ input[type='search'] { width: 100%; border: 1px solid var(--line); border-radius
 .plot-tip, #render-status { font-size: 10px; color: var(--muted); line-height: 1.6; }
 .plot-tip { margin: 17px 0 5px; }
 #render-status { min-height: 16px; margin: 0 0 20px; }
-.plot-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.overview-strip { border-top: 1px solid var(--line); padding-top: 14px; margin-bottom: 26px; }
+.overview-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.overview-head h2 { font-size: 10px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; margin: 0; }
+.overview-head p { font-size: 10px; color: var(--muted); margin: 0; }
+.overview-chart { height: 122px; width: 100%; margin-top: 4px; }
+
+.plot-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px 26px; }
 .plot-grid[data-columns='1'] { grid-template-columns: minmax(0, 1fr); }
-.plot-card { min-width: 0; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); overflow: hidden; }
-.plot-heading { display: flex; align-items: baseline; gap: 12px; padding: 18px 20px 0; }
-.plot-heading h3 { font-size: 12px; font-weight: 500; margin: 0; overflow-wrap: anywhere; }
-.chart { height: 260px; width: 100%; }
-.plot-stats { font-size: 8px; letter-spacing: .045em; font-variant-numeric: tabular-nums; color: var(--muted); border-top: 1px solid var(--line); margin: 0 20px; padding: 12px 0; white-space: pre-wrap; }
+/* A rule and the grid gap separate the plots; the card treatment is reserved for the one in use. */
+.plot-panel { min-width: 0; border-top: 1px solid var(--line); padding: 13px 10px 8px; border-radius: 7px; transition: background .12s, box-shadow .12s; }
+.plot-panel.active { background: var(--surface); box-shadow: 0 6px 22px var(--shadow); }
+@media (prefers-reduced-motion: reduce) { .plot-panel { transition: none; } }
+.panel-head { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
+.panel-head h3 { font-size: 12px; font-weight: 500; margin: 0; overflow-wrap: anywhere; }
+.unit-chip, .sampled-chip { flex-shrink: 0; font-size: 8px; letter-spacing: .08em; color: var(--muted); border: 1px solid var(--line); border-radius: 3px; padding: 2px 5px; }
+.sampled-chip { margin-left: auto; cursor: help; }
+.series-table { display: grid; gap: 1px 12px; margin: 9px 0 2px; font-size: 10px; font-variant-numeric: tabular-nums; }
+.series-table { grid-template-columns: minmax(0, 1fr) repeat(4, minmax(0, auto)); }
+.series-table.single { grid-template-columns: repeat(4, minmax(0, auto)); justify-content: start; }
+.series-row { display: grid; grid-column: 1 / -1; grid-template-columns: subgrid; padding: 2px 0; }
+.series-row > span { text-align: right; overflow: hidden; text-overflow: ellipsis; }
+.series-labels { font-size: 7.5px; letter-spacing: .1em; color: var(--muted); border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+.series-name { display: flex; align-items: center; gap: 6px; text-align: left; min-width: 0; }
+.series-name i { flex-shrink: 0; width: 8px; height: 2px; border-radius: 1px; }
+.series-cursor { color: var(--ink); font-weight: 600; }
+.chart { height: 232px; width: 100%; }
 .empty-selection { text-align: center; padding: 100px 20px; border: 1px dashed var(--line); border-radius: 8px; }
 .empty-selection h3 { font: 32px 'Newsreader Variable', Georgia, serif; margin: 0 0 15px; }
 .empty-selection p { font-size: 12px; color: var(--muted); }
@@ -65,13 +84,11 @@ input[type='search'] { width: 100%; border: 1px solid var(--line); border-radius
 .telemetry-sidebar .check-label { margin:0; line-height:1.5; }
 .telemetry-sidebar input[type='checkbox'] { flex:0 0 auto; margin:0; }
 .telemetry-sidebar select, .telemetry-sidebar input, .telemetry-sidebar textarea { max-width:100%; min-width:0; }
-.plot-heading { padding:8px 22px 0 65px; align-items:baseline; }
-.plot-heading h3 { line-height:1.5; }
-.plot-stats { margin:0 12px; padding:14px 0 0; line-height:1.6; overflow-wrap:anywhere; }
+.panel-head h3 { line-height:1.5; }
 #render-status:empty { display:none; }
 
 /* Let long names and translated controls shrink and wrap inside the rail. */
-.telemetry-shell :is(.telemetry-sidebar,.telemetry-content,.dataset-header,.plot-toolbar,.telemetry-data,.quantity-panel,.small-actions,.section-heading,.plot-heading) { min-width:0; }
+.telemetry-shell :is(.telemetry-sidebar,.telemetry-content,.dataset-header,.plot-toolbar,.telemetry-data,.quantity-panel,.small-actions,.section-heading,.panel-head,.overview-head) { min-width:0; }
 .telemetry-sidebar :is(h2,p,label,summary,button,.dataset-badge) { overflow-wrap:anywhere; }
 .telemetry-sidebar :is(button,select,input,textarea) { box-sizing:border-box; max-width:100%; }
 .telemetry-sidebar button { min-width:0; white-space:normal; line-height:1.5; }
@@ -85,7 +102,7 @@ input[type='search'] { width: 100%; border: 1px solid var(--line); border-radius
 .telemetry-sidebar .dataset-badge { max-width:100%; }
 .telemetry-sidebar input[type='file'] { width:100%; }
 .telemetry-sidebar .file-drop { text-align:center; }
-.plot-heading h3 { min-width:0; max-width:100%; }
+.panel-head h3 { min-width:0; max-width:100%; }
 .empty-selection { overflow-wrap:anywhere; }
 @media (max-width: 1120px) { .telemetry-shell { grid-template-columns: 260px minmax(0, 1fr); } .telemetry-sidebar { padding: 28px 20px; } .telemetry-content { padding: 28px 22px; } .plot-grid { grid-template-columns: minmax(0, 1fr); } .layout-label { margin-left: 0; } }
 @media (max-width: 700px) { .telemetry-nav { height: 74px; padding: 0 20px; gap: 12px; } .local-badge { display: none; } .telemetry-brand strong { font-size: 10px; } .telemetry-shell { display: flex; flex-direction: column; } .telemetry-sidebar { position: static; max-height: none; width: 100%; border-right: 0; border-bottom: 1px solid var(--line); padding: 28px 20px; } .telemetry-sidebar h1 { font-size: 38px; } #quantity-list { max-height: 200px; } .telemetry-content { padding: 28px 15px; } .dataset-header { flex-direction: column; gap: 12px; } .dataset-header h2 { font-size: 32px; } .plot-toolbar { gap: 14px; } }

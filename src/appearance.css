@@ -2,11 +2,11 @@
 :root[data-font=editorial] { --font-body:'Newsreader Variable',Georgia,serif; }
 :root[data-font=modern] { --font-heading:'DM Sans Variable',sans-serif; }
 :root[data-font=technical] { --font-body:Consolas,'Liberation Mono',monospace; --font-heading:Consolas,'Liberation Mono',monospace; }
-:root[data-font] :is(h1,h2,h3,.section-number,.control-dock output,.plot-heading>span,.font-preview) { font-family:var(--font-heading); }
+:root[data-font] :is(h1,h2,h3,.section-number,.control-dock output,.font-preview) { font-family:var(--font-heading); }
 :root[data-font=modern] :is(h1,h2,h3), :root[data-font=technical] :is(h1,h2,h3) { font-weight:500; letter-spacing:-.035em; }
 [data-appearance] .view-menu { background:linear-gradient(120deg,var(--glow),transparent 55%),var(--page); }
 [data-theme=dark][data-appearance] #assembly-view { background:radial-gradient(ellipse at 64% 42%,var(--glow),transparent 62%),var(--page); }
-[data-appearance] .plot-card { box-shadow:0 7px 20px var(--shadow); }
+[data-appearance] .plot-panel.active { box-shadow:0 7px 20px var(--shadow); }
 [data-appearance] .control-dock { border-top-color:color-mix(in srgb,var(--accent) 35%,var(--line)); }
 .font-settings { border-top:1px solid var(--line); padding-top:16px; margin-top:18px; }
 .font-settings label { display:block; margin-bottom:8px; font-size:11px; font-weight:600; }
@@ -48,7 +48,7 @@
 .appearance-heading { margin-bottom:16px; }
 .appearance-heading h2 { font-size:22px; margin:0; }
 .theme-dot { box-shadow:none; }
-:root[data-font] :is(output,input[type=number],.plot-stats,#flight-position,#flight-state,.font-preview span) { font-family:Consolas,'Liberation Mono',monospace; font-variant-numeric:tabular-nums; letter-spacing:0; }
+:root[data-font] :is(output,input[type=number],.series-table,#flight-position,#flight-state,.font-preview span) { font-family:Consolas,'Liberation Mono',monospace; font-variant-numeric:tabular-nums; letter-spacing:0; }
 :root[data-appearance] .view-menu { background:var(--glass); }
 :root[data-appearance] .wordmark strong { letter-spacing:.03em; }
 :root[data-appearance] .mode-switch { border-radius:10px; }
@@ -61,7 +61,7 @@
 :root[data-appearance] #assembly-view h1 { font-size:32px; }
 :root[data-appearance] .telemetry-content { padding-top:74px; }
 :root[data-appearance] .plot-toolbar { background:var(--glass); border:1px solid var(--line); padding:10px 12px; border-radius:10px; gap:14px; }
-:root[data-appearance] .plot-card { border-radius:12px; box-shadow:0 5px 16px var(--shadow); }
+:root[data-appearance] .plot-panel.active { border-radius:12px; box-shadow:0 5px 16px var(--shadow); }
 @media(min-width:761px) {
  :root[data-appearance] #assembly-view { min-height:0; padding:20px 24px 100px; gap:14px; }
  :root[data-appearance] .flyover-panel { top:20px; left:24px; bottom:105px; }

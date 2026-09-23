@@ -19,9 +19,9 @@ function applyMode(value: string) {
 }
 function chooseMode(value:string){applyMode(value);try{localStorage.setItem('viewer-appearance',root.dataset.appearance!);}catch{}}
 function applyFont(value: string) {
- root.dataset.font = fonts.includes(value) ? value : 'modern'; fontSelect.value = root.dataset.font;
+ root.dataset.font = fonts.includes(value) ? value : 'technical'; fontSelect.value = root.dataset.font;
 }
-let mode = root.dataset.theme || 'dark', font = root.dataset.font || 'modern';
+let mode = root.dataset.theme || 'dark', font = root.dataset.font || 'technical';
 try {
  mode = localStorage.getItem('viewer-appearance') || localStorage.getItem('map-appearance') || localStorage.getItem('viewer-theme') || mode;
  font = localStorage.getItem('viewer-font') || font;
@@ -36,12 +36,12 @@ fontSelect.addEventListener('change', () => {
 });
 window.addEventListener('storage', event => {
  if (event.key === 'viewer-appearance') applyMode(event.newValue || 'dark');
- if (event.key === 'viewer-font') applyFont(event.newValue || 'modern');
+ if (event.key === 'viewer-font') applyFont(event.newValue || 'technical');
 });
 if (root.dataset.embedded && window.parent !== window) {
  const host = window.parent.document.documentElement;
  const sync = () => {
-  applyMode(host.dataset.appearance || 'dark'); applyFont(host.dataset.font || 'modern');
+  applyMode(host.dataset.appearance || 'dark'); applyFont(host.dataset.font || 'technical');
   window.dispatchEvent(new Event('resize'));
  };
  new MutationObserver(sync).observe(host, { attributes:true, attributeFilter:['data-appearance','data-font'] });

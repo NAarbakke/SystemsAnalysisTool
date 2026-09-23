@@ -17,7 +17,7 @@ export async function addNotamLayer(viewer: Viewer) {
       const positions = area.coordinates.map(point => Cartesian3.fromDegrees(...point));
       source.entities.add({ id: area.id, name: area.title,
         position: Cartesian3.fromDegrees(center[0], center[1]),
-        label: { text: area.title, font: 'bold 13px sans-serif', fillColor: color, showBackground: true,
+        label: { text: area.title, font: '500 12px "IBM Plex Mono", monospace', fillColor: color, showBackground: true,
           backgroundColor: Color.BLACK.withAlpha(.8), pixelOffset: new Cartesian2(0, -12), heightReference: HeightReference.CLAMP_TO_GROUND },
         ...(area.radius ? { ellipse: { semiMajorAxis: area.radius, semiMinorAxis: area.radius,
           material: color.withAlpha(.28), height: 0, outline: true, outlineColor: color } }
@@ -26,7 +26,7 @@ export async function addNotamLayer(viewer: Viewer) {
       });
       const item = document.createElement('p');
       item.textContent = `${area.title}: ${area.description}`;
-      item.className = 'coordinate-note';
+      item.className = 'note';
       list.appendChild(item);
     }
     await viewer.dataSources.add(source);

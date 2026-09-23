@@ -10,15 +10,15 @@ test('component metadata rejects nonphysical mass and malformed readings but pre
 });
 test('civilian motor has section-specific, labeled demo readings and reversible separation',()=>{
   const motor=createIndustrialMotor();
-  assert.equal(motor.parts.length,8);
+  assert.equal(motor.parts.length,14);
   for (const part of motor.parts) {
     assert.match(part.mesh.userData.operatingDataSource,/Synthetic/);
     assert.ok(readComponentInfo(part.mesh.userData.componentInfo).material);
     assert.equal(readComponentStages(part.mesh.userData.operatingStages).length,1);
   }
   const bearing=motor.parts.find(p=>p.mesh.name==='Drive-end bearing');
-  assert.ok(readComponentStages(bearing.mesh.userData.operatingStages)[0].readings.some(r=>r.label==='Oil supply pressure'&&r.unit==='bar(g)'));
-  const stator=motor.parts.find(p=>p.mesh.name==='Stator');
+  assert.ok(readComponentStages(bearing.mesh.userData.operatingStages)[0].readings.some(r=>r.label==='Envelope vibration'&&r.unit==='gE'));
+  const stator=motor.parts.find(p=>p.mesh.name==='Stator winding');
   assert.ok(!readComponentStages(stator.mesh.userData.operatingStages)[0].readings.some(r=>r.unit==='rpm'));
   motor.setExplosion(1); motor.setExplosion(0);
   motor.parts.forEach(p=>assert.ok(p.mesh.position.distanceTo(p.home)<1e-10)); motor.dispose();

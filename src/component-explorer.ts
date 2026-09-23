@@ -4,7 +4,7 @@ import { readComponentInfo, readComponentStages, type ComponentStage } from './c
 
 /** Selection is visual only: preserve original shared materials and model hierarchy. */
 export function createComponentExplorer(canvas: HTMLCanvasElement, camera: Camera, render: () => void) {
-  const list = document.querySelector<HTMLSelectElement>('#component-list')!;
+  const list = document.querySelector<HTMLElement>('#component-list')!;
   const search = document.querySelector<HTMLInputElement>('#component-search')!;
   const name = document.querySelector<HTMLElement>('#component-name')!;
   const properties = document.querySelector<HTMLElement>('#component-properties')!;
@@ -38,7 +38,7 @@ export function createComponentExplorer(canvas: HTMLCanvasElement, camera: Camer
   function clear() {
     if (selected && original) selected.material = original;
     highlights.forEach(material => material.dispose()); highlights = [];
-    selected = undefined; original = undefined; list.selectedIndex = -1;
+    selected = undefined; original = undefined; markSelected();
     name.textContent = 'Select a component'; properties.replaceChildren();
     operation.hidden = true; readings.replaceChildren(); stages = [];
     materialLabel.textContent = ''; cadProperties.hidden = true;
@@ -51,8 +51,8 @@ export function createComponentExplorer(canvas: HTMLCanvasElement, camera: Camer
     highlights = (Array.isArray(original) ? original : [original]).map(material => {
       const copy = material.clone();
       const surface = copy as Material & { emissive?: Color; emissiveIntensity?: number; color?: Color };
-      if (surface.emissive) { surface.emissive.set('#4c9fe8'); surface.emissiveIntensity = .65; }
-      else surface.color?.lerp(new Color('#8fcaff'), .45);
+      if (surface.emissive) { surface.emissive.set('#f5883a'); surface.emissiveIntensity = .55; }
+      else surface.color?.lerp(new Color('#ffab6b'), .5);
       return copy;
     });
     mesh.material = Array.isArray(original) ? highlights : highlights[0];
@@ -83,21 +83,30 @@ export function createComponentExplorer(canvas: HTMLCanvasElement, camera: Camer
     dataSource.textContent = typeof mesh.userData.operatingDataSource === 'string' ? mesh.userData.operatingDataSource.slice(0,160) : 'Supplied data';
     showReadings();
     search.value = ''; refreshList();
-    list.value = String(model.parts.findIndex(p => p.mesh === mesh));
+    list.querySelector('[aria-pressed="true"]')?.scrollIntoView({ block: 'nearest' });
     render();
     requestAnimationFrame(() => {
       if (selected === mesh && panel.scrollHeight > panel.clientHeight) panel.scrollTop = name.getBoundingClientRect().top - panel.getBoundingClientRect().top + panel.scrollTop - 16;
     });
   }
-  function refreshList() {
-    const query = search.value.trim().toLowerCase(); list.replaceChildren();
-    model.parts.forEach((part, i) => {
-      const label = part.mesh.name || `Component ${i + 1}`;
-      if (label.toLowerCase().includes(query)) list.add(new Option(label, String(i), false, selected === part.mesh));
-    });
-    if (!selected || ![...list.options].some(o => model.parts[Number(o.value)].mesh === selected)) list.selectedIndex = -1;
+  function markSelected() {
+    for (const button of list.querySelectorAll<HTMLButtonElement>('button'))
+      button.setAttribute('aria-pressed', String(model?.parts[Number(button.dataset.index)]?.mesh === selected && !!selected));
   }
-  list.addEventListener('change', () => { if (list.value !== '') select(model.parts[Number(list.value)]?.mesh); });
+  function refreshList() {
+    const query = search.value.trim().toLowerCase();
+    list.replaceChildren(...model.parts.flatMap((part, i) => {
+      const label = part.mesh.name || `Component ${i + 1}`;
+      if (!label.toLowerCase().includes(query)) return [];
+      const button = document.createElement('button'); button.type = 'button'; button.dataset.index = String(i);
+      const number = document.createElement('span'); number.textContent = String(i + 1).padStart(2, '0');
+      const name = document.createElement('span'); name.textContent = label;
+      button.append(number, name);
+      button.addEventListener('click', () => select(part.mesh));
+      return [button];
+    }));
+    markSelected();
+  }
   search.addEventListener('input', refreshList);
   const start = (event: PointerEvent) => { if (event.button !== 0 || !event.isPrimary) { down = undefined; return; } down = { x:event.clientX, y:event.clientY, id:event.pointerId }; dragged = false; };
   const move = (event: PointerEvent) => { if (down && Math.hypot(event.clientX-down.x,event.clientY-down.y)>5) dragged = true; };
@@ -113,6 +122,7 @@ export function createComponentExplorer(canvas: HTMLCanvasElement, camera: Camer
   const cancel = () => { down = undefined; };
   canvas.addEventListener('pointerdown', start); canvas.addEventListener('pointermove', move);
   canvas.addEventListener('pointerup', end); canvas.addEventListener('pointercancel', cancel);
-  return { clear, setModel(next: Assembly) { clear(); activeStage = ''; model = next; search.value = ''; refreshList(); },
+  return { clear, setModel(next: Assembly) { clear(); activeStage = ''; model = next; search.value = ''; refreshList();
+      document.querySelector('#component-count')!.textContent = `${next.parts.length} parts`; },
     dispose() { clear(); canvas.removeEventListener('pointerdown',start); canvas.removeEventListener('pointermove',move); canvas.removeEventListener('pointerup',end); canvas.removeEventListener('pointercancel',cancel); } };
 }

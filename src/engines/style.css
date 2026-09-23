@@ -1,48 +1,32 @@
-﻿/* Engine illustrations use their own layout so panels never cover the drawing. */
-* { box-sizing:border-box; }
-body.engine-page { margin:0; background:var(--page); color:var(--ink); font-family:var(--font-body); --edge:#8b969f; --recess:#171e26; --section:#363f47; }
-[data-theme=light] body.engine-page { --edge:#566571; --recess:#d4dade; --section:#414c55; }
-.engine-page [hidden] { display:none!important; }
-.engine-page button,.engine-page select { font:inherit; color:var(--ink); border:1px solid var(--line); background:var(--paper); border-radius:8px; padding:9px 12px; cursor:pointer; max-width:100%; min-width:0; }
-.engine-page button:hover { border-color:var(--accent); }
-.engine-page button:disabled { opacity:.35; cursor:default; }
-.engine-page :focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
-.engine-nav { display:flex; align-items:center; gap:24px; padding:0 24px; }
-.engine-nav a { color:var(--ink); text-decoration:none; }
-.engine-nav>span { color:var(--muted); font-size:12px; }
-.engine-nav>[data-appearance-host] { margin-left:auto; }
-:root[data-embedded] .engine-page .engine-nav { display:none; }
-:root[data-appearance] .engine-page .engine-dashboard { position:fixed; inset:var(--overlay-top) 20px 20px; display:grid; grid-template-rows:auto minmax(0,1fr); gap:18px; padding:0; max-width:none; }
-:root[data-appearance] .engine-page .engine-toolbar { position:static; display:flex; flex-wrap:wrap; align-items:end; gap:16px; max-width:none; padding:0; margin:0; border:0; background:none; backdrop-filter:none; }
-.model-picker { display:grid; gap:7px; font-size:10px; color:var(--muted); }
-.model-picker select { min-height:38px; width:220px; font-size:12px; }
-.drawing-help { margin:auto 0 11px auto; font-size:11px; color:var(--muted); }
-:root[data-appearance] .engine-page .diagram-layout { display:grid; grid-template-columns:minmax(0,1fr) 250px; gap:20px; min-height:0; }
-:root[data-appearance] .engine-page .diagram-stage { position:relative; inset:auto; height:100%; min-height:0; border:1px solid var(--line); border-radius:14px; overflow:hidden; background:radial-gradient(ellipse at 45% 45%,var(--glow),transparent 75%); }
-:root[data-appearance] .engine-page #engine-svg { position:absolute; inset:20px 0 76px; width:100%; height:calc(100% - 96px); margin:0; display:block; touch-action:none; cursor:grab; }
+@layer views {
+#engines-view { --edge:#8b969f; --recess:#141414; --section:#3a3a3a; }
+[data-theme=light] #engines-view { --edge:#566571; --recess:#d4dade; --section:#414c55; }
+.engine-dashboard { height:100%; display:grid; grid-template-columns:minmax(0,1fr) 272px; gap:var(--gutter); }
+.diagram-stage { position:relative; min-height:0; overflow:hidden; }
+#engine-svg { position:absolute; inset:64px 0 72px; width:100%; height:calc(100% - 136px); display:block; touch-action:none; cursor:grab; }
 #engine-svg:active { cursor:grabbing; }
-:root[data-appearance] .engine-page .engine-inspector { position:static; inset:auto; width:auto; max-height:100%; overflow:auto; padding:18px; border-radius:14px; min-width:0; }
-.engine-inspector summary { font-size:12px; cursor:pointer; }
-.engine-inspector[open]>summary { margin-bottom:24px; }
-.inspector-heading { display:flex; justify-content:space-between; gap:10px; font-size:9px; color:var(--muted); }
-.eyebrow { margin:0; letter-spacing:.1em; }
-.engine-inspector h2 { font-size:23px; font-weight:500; line-height:1.2; margin:14px 0 10px; overflow-wrap:anywhere; }
-#selected-role { font-size:12px; line-height:1.7; color:var(--muted); min-height:82px; }
-#component-buttons { display:grid; gap:4px; margin:22px 0; }
-#component-buttons button { display:grid; grid-template-columns:22px minmax(0,1fr); gap:8px; text-align:left; align-items:baseline; font-size:11px; line-height:1.5; padding:9px 8px; border-color:transparent; background:transparent; overflow-wrap:anywhere; }
-#component-buttons button span:first-child { font:10px Consolas,monospace; color:var(--muted); }
-#component-buttons button.selected { color:var(--accent); background:var(--glow); border-color:var(--line); }
-.data-note { font-size:10px; line-height:1.7; color:var(--muted); border-top:1px solid var(--line); padding-top:16px; }
-.reference-link { display:inline-block; color:var(--muted); font-size:10px; line-height:1.6; }
-:root[data-appearance] .engine-page .diagram-tools { position:absolute; left:50%; bottom:14px; transform:translateX(-50%); display:flex; align-items:center; gap:3px; padding:5px; border:1px solid var(--line); border-radius:10px; background:var(--paper); box-shadow:none; white-space:nowrap; }
-.diagram-tools button { padding:7px 10px; border:0; background:transparent; font-size:12px; }
-.diagram-tools output { font:10px Consolas,monospace; min-width:38px; text-align:center; }
-.diagram-tools label { display:flex; align-items:center; gap:5px; padding:0 8px; font-size:10px; }
-:root[data-appearance] .engine-page .diagram-meta { position:absolute; inset:10px 14px auto; display:flex; justify-content:space-between; gap:12px; font-size:8px; letter-spacing:.06em; color:var(--muted); pointer-events:none; }
+.engine-toolbar { position:absolute; top:0; left:0; width:240px; padding:12px; z-index:2; }
+.engine-toolbar label { margin-top:0; }
+.diagram-meta { position:absolute; top:4px; right:4px; display:flex; flex-direction:column; align-items:flex-end; gap:4px; font:var(--fs-xs) var(--font-mono); letter-spacing:.06em; text-transform:uppercase; color:var(--muted); pointer-events:none; }
+#diagram-badge { color:var(--hot); }
+.diagram-tools { position:absolute; left:50%; bottom:14px; transform:translateX(-50%); display:flex; align-items:center; gap:2px; padding:4px; white-space:nowrap; overflow:visible; z-index:2; }
+.diagram-tools button { min-height:30px; padding:4px 10px; border:0; background:transparent; }
+.diagram-tools output { font-size:var(--fs-xs); min-width:44px; text-align:center; }
+.diagram-tools .check { margin:0 8px; padding-left:10px; border-left:1px solid var(--line); }
+.engine-inspector { min-height:0; }
+.engine-inspector h2 { font-size:var(--fs-xl); line-height:1.2; margin:0 0 8px; overflow-wrap:anywhere; }
+#selected-role { font-size:var(--fs-sm); line-height:1.7; color:var(--muted); margin:0; }
+#component-buttons { display:grid; gap:1px; margin:16px 0; padding-top:12px; border-top:1px solid var(--line); }
+#readings { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-bottom:12px; }
+.reading { padding:8px; border:1px solid var(--line); border-radius:var(--r-sm); }
+.reading span { display:block; font:var(--fs-xs) var(--font-mono); text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+.reading strong { font:500 var(--fs-md) var(--font-mono); }
+.reading small { margin-left:4px; color:var(--muted); font-size:var(--fs-xs); }
+#data-note { padding-top:12px; border-top:1px solid var(--line); }
 .engine-part { fill:url(#metal); stroke:var(--edge); stroke-width:1.1; stroke-linejoin:round; cursor:pointer; }
 .engine-part:hover { stroke:var(--ink); }
-.engine-part.selected { stroke:var(--accent); stroke-width:1.8; }
-.engine-part.selected :is(path,rect,circle) { stroke:var(--accent); }
+.engine-part.selected { stroke:var(--hot); stroke-width:1.8; }
+.engine-part.selected :is(path,rect,circle) { stroke:var(--hot); }
 .shell,.spinner { fill:url(#metal); }
 .fan-blade,.compressor-blade { fill:url(#blade-metal); }
 .turbine-blade,.warm-part { fill:url(#hot-metal); }
@@ -63,7 +47,7 @@ body.engine-page { margin:0; background:var(--page); color:var(--ink); font-fami
 .duct-volume { fill:#73a7bd12; stroke:none; }
 .core-volume { fill:var(--recess); opacity:.55; stroke:none; }
 .centerline { fill:none; stroke:var(--muted); stroke-width:.8; stroke-dasharray:18 5 3 5; opacity:.35; }
-.zone-label { fill:var(--muted); stroke:none; text-anchor:middle; font:9px var(--font-body); letter-spacing:1.5px; pointer-events:none; }
+.zone-label { fill:var(--muted); stroke:none; text-anchor:middle; font:11px var(--font-mono); letter-spacing:1.5px; pointer-events:none; }
 .inset-frame { fill:var(--page); stroke:var(--line); stroke-width:1.2; }
 .annotation { cursor:pointer; }
 .annotation .callout-name { pointer-events:none; }
@@ -71,11 +55,11 @@ body.engine-page { margin:0; background:var(--page); color:var(--ink); font-fami
 .annotation .anchor { fill:var(--muted); stroke:none; }
 .annotation .callout-disc { fill:var(--page); stroke:var(--muted); stroke-width:1; }
 .annotation text { text-anchor:middle; fill:var(--ink); stroke:none; }
-.callout-number { font:10px Consolas,monospace; }
-.callout-name { display:none; font:13px var(--font-body); paint-order:stroke; stroke:var(--page)!important; stroke-width:5px!important; stroke-linejoin:round; }
+.callout-number { font:10px var(--font-mono); }
+.callout-name { display:none; font:13px var(--font-sans); paint-order:stroke; stroke:var(--page)!important; stroke-width:5px!important; stroke-linejoin:round; }
 .annotation.active .callout-name { display:block; }
-.annotation.active :is(path,.callout-disc) { stroke:var(--accent); opacity:1; }
-.annotation.active text { fill:var(--accent); }
+.annotation.active :is(path,.callout-disc) { stroke:var(--hot); opacity:1; }
+.annotation.active text { fill:var(--hot); }
 .airflow { fill:none; stroke:#65b3d2; stroke-width:1.8; stroke-dasharray:8 13; opacity:.7; pointer-events:none; display:none; }
 .flow-visible .airflow { display:block; }
 .flow-running .airflow { animation:airflow 2s linear infinite; }
@@ -94,16 +78,10 @@ body.engine-page { margin:0; background:var(--page); color:var(--ink); font-fami
 .overview-frame { fill:var(--glow); stroke:var(--line); stroke-dasharray:none; }
 .break-mark,.diagram-bracket { fill:none; stroke:var(--muted); stroke-width:1; }
 @media(max-width:900px) {
- :root[data-appearance] .engine-page .engine-dashboard { inset:var(--overlay-top) 12px 12px; overflow:auto; display:block; }
- :root[data-appearance] .engine-page .engine-toolbar { gap:10px; margin-bottom:14px; }
- .model-picker { flex:1 1 140px; }
- .model-picker select { width:100%; }
- .drawing-help { display:none; }
- :root[data-appearance] .engine-page .diagram-layout { grid-template-columns:minmax(0,1fr); gap:14px; }
- :root[data-appearance] .engine-page .diagram-stage { height:clamp(300px,42svh,440px); }
- :root[data-appearance] .engine-page .engine-inspector { max-height:none; }
+ .engine-dashboard { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(300px,55svh) auto; overflow:auto; }
  #component-buttons { grid-template-columns:repeat(2,minmax(0,1fr)); }
- #selected-role { min-height:0; }
- .diagram-meta span:last-child { display:none; }
+ .diagram-meta { display:none; }
+ .engine-toolbar { width:auto; right:14px; }
 }
 @media(prefers-reduced-motion:reduce) { .flow-running .airflow { animation:none; } }
+}

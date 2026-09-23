@@ -1,31 +1,33 @@
-﻿<main class="telemetry-shell">
-    <aside class="telemetry-sidebar"><header class="dataset-header" id="dataset-header" hidden><h2 id="dataset-name" hidden></h2></header><div class="plot-toolbar"><label class="check-label"><input id="linked-zoom" type="checkbox" checked> Link time zoom</label><label class="check-label"><input id="show-markers" type="checkbox"> Show samples</label><label class="layout-label" for="plot-columns">Layout <select id="plot-columns"><option value="2">Two columns</option><option value="1">One column</option></select></label><button id="reset-zoom" type="button">Reset zoom ↗</button></div><details class="telemetry-data"><summary>Data &amp; quantities</summary>
-      
-      
-      <label class="file-drop" for="data-file"><span aria-hidden="true">↥</span><strong>Open a data file</strong><small>CSV / JSON</small><input id="data-file" type="file" accept=".csv,.json,text/csv,application/json"></label>
-      <div class="small-actions"><button id="demo" type="button">Load demo</button><button id="download-demo" type="button">Example CSV ↓</button></div>
-      <details><summary>Paste data</summary><label for="paste-data">CSV or JSON</label><textarea id="paste-data" rows="6" spellcheck="false" placeholder="time_s,position_x_m,velocity_x_m_s&#10;0,0,0&#10;1,0.2,0.4"></textarea><button id="load-paste" type="button">Load pasted data</button></details>
-      <div id="import-status" class="import-status" role="status" aria-live="polite"></div>
+<div class="telemetry-shell">
+  <aside class="panel telemetry-sidebar">
+    <header id="dataset-header" hidden><p class="eyebrow">Dataset</p><h2 id="dataset-name" hidden></h2></header>
+    <div class="plot-toolbar">
+      <label class="check"><input id="linked-zoom" type="checkbox" checked> Link time zoom</label>
+      <label class="check"><input id="show-markers" type="checkbox"> Show samples</label>
+      <label for="plot-columns">Layout</label><select id="plot-columns"><option value="2">Two columns</option><option value="1">One column</option></select>
+      <div class="actions"><button id="reset-zoom" type="button">Reset zoom</button></div>
+    </div>
+    <details class="telemetry-data" open><summary>Data &amp; quantities</summary>
+      <label class="file-drop" for="data-file"><strong>Open a data file</strong><small>CSV or JSON</small><input id="data-file" type="file" accept=".csv,.json,text/csv,application/json"></label>
+      <div class="actions"><button id="demo" type="button">Load demo</button><button id="download-demo" type="button">Example CSV</button></div>
+      <details><summary>Paste data</summary><label for="paste-data">CSV or JSON</label><textarea id="paste-data" rows="6" spellcheck="false" placeholder="time_s,position_x_m,velocity_x_m_s&#10;0,0,0&#10;1,0.2,0.4"></textarea><div class="actions"><button id="load-paste" type="button">Load pasted data</button></div></details>
+      <div id="import-status" class="note" role="status" aria-live="polite"></div>
       <section class="quantity-panel" aria-label="Plot selection">
-        <div class="section-heading"><h2>Quantities</h2><span id="selection-count"></span></div>
+        <div class="panel-title"><h2>Quantities</h2><span id="selection-count" class="eyebrow"></span></div>
         <label for="time-column">Time column</label><select id="time-column"></select>
         <label for="quantity-search">Find a quantity</label><input id="quantity-search" type="search" placeholder="Search column names…">
-        <div class="small-actions"><button id="select-all" type="button">Select all</button><button id="select-none" type="button">Clear selection</button></div>
+        <div class="actions"><button id="select-all" type="button">Select all</button><button id="select-none" type="button">Clear</button></div>
         <div id="quantity-list"></div>
       </section>
-      
-    </details></aside>
-    <section class="telemetry-content" aria-label="Simulation plots">
-      
-      
-      
-      <p id="render-status" role="status" aria-live="polite"></p>
-      <section id="overview-strip" class="overview-strip" aria-label="Run overview" hidden>
-        <div class="overview-head"><h2>Overview</h2><p id="overview-note"></p></div>
-        <div id="overview-chart" class="overview-chart" aria-label="Whole run, drag to set the time range on every chart"></div>
-      </section>
-      <div id="plot-grid" class="plot-grid"></div>
-      <div id="empty-selection" class="empty-selection" hidden><h3>No quantities selected.</h3></div>
+    </details>
+  </aside>
+  <section class="telemetry-content" aria-label="Simulation plots">
+    <p id="render-status" class="note" role="status" aria-live="polite"></p>
+    <section id="overview-strip" class="overview-strip" aria-label="Run overview" hidden>
+      <div class="overview-head"><h2 class="eyebrow">Overview</h2><p id="overview-note" class="note"></p></div>
+      <div id="overview-chart" class="overview-chart" aria-label="Whole run. Drag to set the time range on every chart; double-click to reset."></div>
     </section>
-  </main>
-
+    <div id="plot-grid" class="plot-grid"></div>
+    <div id="empty-selection" class="empty-selection" hidden><h3>No quantities selected</h3><p>Choose quantities in the side panel to plot them.</p></div>
+  </section>
+</div>

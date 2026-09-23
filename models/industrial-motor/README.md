@@ -1,6 +1,6 @@
 # Industrial electric motor demonstrator
 
-An Assembly-only teaching model with eight physical sections: housing, stator, rotor, shaft, two bearings and two end covers. It is not an engine performance simulation or an engineering CAD design. Geometry, material assignments and operating readings are illustrative. Pressure denotes the hypothetical external bearing oil supply, in gauge bar; it is not pressure inside solid material.
+An Assembly-only teaching model of a foot-mounted, totally enclosed fan-cooled induction motor with fourteen parts: finned frame, stator core, stator winding, squirrel-cage rotor, shaft and key, two deep-groove ball bearings, preload wave washer, two end shields, cooling fan, fan cowl and terminal box. It is not an engineering CAD design. Geometry, material assignments and operating readings are illustrative.
 
 Click a section to see relevant readings. The example shows a single synthetic snapshot, not operating phases or measured telemetry. The demo does not drive the displayed geometry at the indicated RPM.
 

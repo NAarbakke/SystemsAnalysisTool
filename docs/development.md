@@ -20,7 +20,7 @@ npm.cmd test
 npm.cmd run build
 ```
 
-The build includes TypeScript checking and writes the production app to `dist/`. For visual changes, also inspect the affected screen in light and dark modes, at desktop and narrow widths. Automated tests do not establish drawing realism.
+The build includes TypeScript checking and writes the production app to `dist/`. For visual changes, also inspect the affected screen in light and dark modes, at desktop and narrow widths. `npm.cmd run screenshots` saves every view in both modes to `outputs/screenshots/` (add a width and height, such as `-- 390 844`, for a narrow screen); it needs Chrome or Edge and a current build. Automated tests do not establish drawing realism.
 
 Both development and production builds prepare Cesium's local assets. Deploy the entire `dist/` folder, including imagery, workers and license metadata. Flyover's configured online basemap sources still require a network connection.
 
@@ -32,13 +32,14 @@ Both development and production builds prepare Cesium's local assets. Deploy the
 | `models/<name>/model.ts` | Authored 3D assemblies. |
 | `models/engine-diagrams/` | Selectable SVG engine illustrations. |
 | `src/main.ts`, `src/assembly.ts` | Assembly viewer and shared model interface. |
+| `src/styles/` | Shared design tokens (`tokens.css`), controls and panels (`base.css`) and the shell layout (`views.css`). |
 | `src/engines/` | Engine diagram interaction and styling. |
 | `src/flyover.ts`, `src/basemap.ts` | Globe, flight replay and basemap source switching. |
 | `src/dashboard/` | Telemetry. |
 | `static/data/` | Data examples, configuration and format guides. |
-| `scripts/serve.mjs`, `scripts/serve.py` | Local/intranet static servers. |
+| `scripts/serve.mjs` | Local/intranet static server for `dist/`. |
 
-To add a 3D model, create its folder under `models/` and register its factory in `models/index.ts`. The catalogue distinguishes Assembly-only examples from the models also available in Flyover. Engine SVG diagrams have a separate catalogue in `src/engines/main.js`.
+To add a 3D model, create its folder under `models/` and register its factory in `models/index.ts`. The catalogue distinguishes Assembly-only examples from the models also available in Flyover. Engine SVG diagrams have a separate catalogue in `src/engines/main.ts`.
 
 GLB viewing imports are supported. STEP/SolidWorks conversion and editable CAD features are not provided by the browser. See the [GLB import guide](../static/data/assembly-import/README.md).
 
@@ -49,21 +50,11 @@ node scripts/serve.mjs
 node scripts/serve.mjs --host 0.0.0.0 --port 8080
 ```
 
-The first command listens on this computer only, on port 3000. The second permits network access on port 8080. Python equivalents use `python scripts/serve.py` with the same options; Windows users can use `py -3 scripts/serve.py`.
+The first command listens on this computer only, on port 3000. The second permits network access on port 8080.
 
-The runtime host needs Node.js or Python, but not npm dependencies when `dist/` is already built. Both servers serve `dist/`, not the source tree. Keep the server running and configure the host firewall for the chosen intranet port. Use your organisation's service setup for automatic startup.
+The server serves `dist/`, not the source tree. Keep the server running and configure the host firewall for the chosen intranet port. Use your organisation's service setup for automatic startup.
 
 IIS, nginx or another static web server can serve `dist/` directly. Relative asset paths support an intranet subdirectory. No cloud hosting configuration is required.
-
-## Optional portable package
-
-After installing dependencies and building:
-
-```powershell
-npm.cmd run package:intranet
-```
-
-This creates a new folder under `outputs/` containing the build, launchers, server scripts and examples. Copy the whole folder to the host. The package script does not rebuild the app. Its generated usage notes may lag the current interface; use the repository README and linked guides for current instructions. Repository documentation links require the corresponding source folders and are not all included in the portable package.
 
 ## Additional references
 

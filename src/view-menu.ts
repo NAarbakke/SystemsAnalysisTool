@@ -7,9 +7,9 @@ export function setupViewMenu(onAssemblyVisible: (visible: boolean) => void) {
   const telemetryButton = document.querySelector<HTMLButtonElement>('#telemetry-mode')!;
   const engines = document.querySelector<HTMLElement>('#engines-view')!;
   const enginesButton = document.querySelector<HTMLButtonElement>('#engines-mode')!;
-  const enginesFrame = document.querySelector<HTMLIFrameElement>('#engines-frame')!;
   let flyover: Awaited<ReturnType<typeof import('./flyover.ts')['createFlyover']>> | undefined;
   let dashboard: typeof import('./dashboard/main.ts') | undefined;
+  let engineView: typeof import('./engines/main.ts') | undefined;
   let globeLoading: Promise<void> | undefined;
   let telemetryLoading: Promise<void> | undefined;
   let active: 'assembly' | 'flyover' | 'telemetry' | 'engines' = 'assembly';
@@ -18,16 +18,16 @@ export function setupViewMenu(onAssemblyVisible: (visible: boolean) => void) {
     assembly.hidden = view !== 'assembly'; globe.hidden = view !== 'flyover'; telemetry.hidden = view !== 'telemetry';
     engines.hidden = view !== 'engines';
     for (const [button, name] of [[assemblyButton, 'assembly'], [flyoverButton, 'flyover'], [telemetryButton, 'telemetry'], [enginesButton, 'engines']] as const) button.setAttribute('aria-pressed', String(view === name));
-    document.title = view === 'engines' ? 'Engines - SystemsAnalysisTool' : view === 'telemetry' ? 'Telemetry — SystemsAnalysisTool' : view === 'flyover' ? 'Earth flyover — SystemsAnalysisTool' : `${assembly.querySelector<HTMLSelectElement>('#model-picker')?.selectedOptions[0]?.textContent ?? 'Assembly'} — SystemsAnalysisTool`;
-    flyover?.setVisible(view === 'flyover'); dashboard?.setVisible(view === 'telemetry');
+    document.title = view === 'engines' ? 'Engines — Systems Analysis Tool' : view === 'telemetry' ? 'Telemetry — Systems Analysis Tool' : view === 'flyover' ? 'Earth flyover — Systems Analysis Tool' : `${assembly.querySelector<HTMLSelectElement>('#model-picker')?.selectedOptions[0]?.textContent ?? 'Assembly'} — Systems Analysis Tool`;
+    flyover?.setVisible(view === 'flyover');
     onAssemblyVisible(view === 'assembly');
-    enginesFrame.contentWindow?.postMessage({ type:'engine-visibility', visible:view === 'engines' }, location.origin);
+    engineView?.setVisible(view === 'engines');
     const url = new URL(location.href); url.searchParams.set('view', view); history.replaceState(null, '', url);
   }
-  enginesFrame.addEventListener('load', () => enginesFrame.contentWindow?.postMessage({type:'engine-visibility',visible:active === 'engines'},location.origin));
-  enginesButton.addEventListener('click', () => {
+  enginesButton.addEventListener('click', async () => {
     activate('engines');
-    if (!enginesFrame.hasAttribute('src')) enginesFrame.src = './engines.html?embedded=1';
+    engineView ??= await import('./engines/main.ts');
+    engineView.setVisible(active === 'engines');
   });
   assemblyButton.addEventListener('click', () => activate('assembly'));
   flyoverButton.addEventListener('click', async () => {
@@ -55,7 +55,6 @@ export function setupViewMenu(onAssemblyVisible: (visible: boolean) => void) {
           const { default: markup } = await import('./dashboard/view.html?raw');
           telemetry.innerHTML = markup;
           dashboard = await import('./dashboard/main.ts');
-          dashboard.setVisible(active === 'telemetry');
         } catch (cause) {
           console.error(cause);
           telemetry.textContent = 'Could not load Telemetry. Reload the page to retry.';

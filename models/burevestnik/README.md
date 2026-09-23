@@ -4,5 +4,5 @@
 pieces separate for presentation. Proportions and movements are approximate,
 in arbitrary scene units.
 
-`Burevestnik_Paper_Final_pdf.pdf` is the user-provided reference. Exterior
+A user-provided reference paper (kept locally, not in the repository) informed the shape. Exterior
 illustrations in figures 2–3 inspired the visual appearance.

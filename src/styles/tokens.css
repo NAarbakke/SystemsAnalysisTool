@@ -1,0 +1,40 @@
+/* Layer order decides which rule wins, so no selector needs extra specificity to override another. */
+@layer tokens, base, views;
+
+@layer tokens {
+  :root {
+    /* Technical face everywhere: one monospace family for text, numbers and labels. */
+    --font-sans: 'IBM Plex Mono', Consolas, ui-monospace, monospace;
+    --font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+    /* Older rules and the authored engine drawings read --font-body. */
+    --font-body: var(--font-sans);
+
+    --fs-xs: 11px; --fs-sm: 12px; --fs-md: 14px; --fs-lg: 17px; --fs-xl: 22px; --fs-2xl: 28px;
+    --r-sm: 6px; --r-md: 12px; --r-pill: 999px;
+
+    --nav-h: 68px;
+    --gutter: 20px;
+    --overlay-top: calc(12px + var(--nav-h) + 20px);
+    --blur: blur(18px) saturate(120%);
+  }
+
+  /* Dark is the default: true black, neutral greys, one cool accent and one warm colour for heat. */
+  :root, :root[data-theme='dark'] {
+    color-scheme: dark;
+    --page: #000000; --paper: #0c0c0d; --ink: #e8e8e8; --muted: #8c8c8c;
+    --line: #ffffff1f;
+    --accent: #7fb2e5; --accent-soft: #7fb2e51a; --on-accent: #000000;
+    --hot: #f59a4a; --hot-soft: #f59a4a1f;
+    --danger: #ff8474; --ok: #5fcf8f;
+    --glass: #0a0a0bd9; --field: #00000099; --shadow: #000a;
+  }
+  :root[data-theme='light'] {
+    color-scheme: light;
+    --page: #eef2f6; --paper: #ffffff; --ink: #15202b; --muted: #526171;
+    --line: #1b3a5a26;
+    --accent: #255f99; --accent-soft: #255f9914; --on-accent: #ffffff;
+    --hot: #b8570f; --hot-soft: #b8570f17;
+    --danger: #b3261e; --ok: #1d7a45;
+    --glass: #ffffffd9; --field: #e6ecf280; --shadow: #17283b1f;
+  }
+}

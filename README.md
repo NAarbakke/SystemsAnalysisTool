@@ -1,18 +1,10 @@
-﻿# SystemsAnalysisTool
+# Systems Analysis Tool
 
 Explore 3D assemblies, engine diagrams, flight replays and simulation plots in your browser. Run it on your computer or share it on an intranet.
 
 ## Start here
 
-If you received a ready-built copy with a `dist` folder:
-
-1. Install **Node.js 22.13 or newer**, or **Python 3.9 or newer**, if neither is installed.
-2. Double-click **run-local.cmd** in the project folder.
-3. Open **http://localhost:3000** in Chrome or Edge.
-
-Keep the server window open while using the app. Press **Ctrl+C** in that window to stop it. Open the web address above, rather than double-clicking an HTML file.
-
-**Starting from source, or updating the app?** With Node.js installed, open PowerShell in this folder and run:
+The repository holds source only. Install **Node.js 22.13 or newer**, open PowerShell in this folder and run:
 
 ```powershell
 npm.cmd ci
@@ -20,7 +12,9 @@ npm.cmd run build
 npm.cmd start
 ```
 
-Installing dependencies needs internet access or a prepared npm cache. The build creates `dist`; rebuild after source changes to update the app served by the launcher.
+Then open **http://localhost:3000** in Chrome or Edge. Keep the server window open while using the app; press **Ctrl+C** to stop it.
+
+`npm.cmd ci` downloads dependencies, so it needs access to the npm registry or an internal mirror. The build creates `dist`; rebuild after pulling changes.
 
 ## Choose a tab
 
@@ -31,7 +25,7 @@ Installing dependencies needs internet access or a prepared npm cache. The build
 | **Flyover** | Play an example route or load flight data on a globe. Choose satellite, street or offline basemaps and save camera views. |
 | **Telemetry** | Import CSV/JSON simulation data, choose signals, zoom plots and export PNG images. |
 
-Use **Appearance** to change light/dark mode and fonts. Preferences are remembered in this browser.
+Use the **Dark / Light** button in the top-right corner to switch colour mode. The choice is remembered in this browser.
 
 ### Assembly
 
@@ -50,18 +44,18 @@ See the [engine design notes](docs/engine-schematic-review.md) for the implement
 ### Flyover and Telemetry
 
 - **Flyover:** try Play first. To use your data, open **Load a flight**, choose its input format and load a CSV. Use **Example** for a matching sample. See [sample files and settings](models/examples/README.md) and the [detailed replay reference](docs/replay-reference.md). Under **Map source**, choose satellite, streets or the offline NASA overview; **Saved views** remembers camera positions in this browser. See [map sources](static/data/maps/README.md).
-- **Telemetry:** import CSV/JSON or paste a table, then choose which quantities to plot. Quantities whose names share a base and a unit suffix (`position_x_m`, `position_y_m`, `position_z_m`) are drawn on one chart with a legend, so a vector reads as one picture. The **Overview** strip above the charts covers the whole run: drag inside it to set the time range everywhere. Hovering any chart draws one time crosshair across all of them and fills the **at cursor** column in every header. See the [data format and Python export guide](static/data/dashboard/README.md).
+- **Telemetry:** import CSV/JSON or paste a table, then choose which quantities to plot. Quantities whose names share a base and a unit suffix (`position_x_m`, `position_y_m`, `position_z_m`) are drawn on one chart with a legend, so a vector reads as one picture. The **Overview** strip above the charts covers the whole run: drag inside it to set the time range everywhere, and double-click it to show the whole run again. Hovering any chart draws one time crosshair across all of them and fills the **at cursor** column in every header. See the [data format and Python export guide](static/data/dashboard/README.md).
 
 ## Offline use and your data
 
 Assemblies, engine diagrams, plots and the bundled NASA globe overview work offline after building. **Satellite and street maps need a network connection** to their configured providers. Detailed offline mapping needs an internal imagery service.
 
-Imported models and simulation files are processed in the browser and cleared on reload. Appearance preferences and saved map views can persist locally. There is no account or live simulation connection. Example models, flight routes and NOTAM areas are illustrative; the app does not calculate flight dynamics or provide engineering measurements.
+Imported models and simulation files are processed in the browser and cleared on reload. The colour mode and saved map views can persist locally. There is no account or live simulation connection. Example models, flight routes and NOTAM areas are illustrative; the app does not calculate flight dynamics or provide engineering measurements.
 
 ## Share on an intranet
 
-1. Put the built project on the host computer. It needs Node.js or Python.
-2. Run **run-intranet.cmd** on that computer.
+1. Copy the source to the host computer and build it as in [Start here](#start-here).
+2. Run `npm.cmd run start:intranet` on that computer.
 3. Other users open **http://HOST-MACHINE-NAME:3000** in their browser.
 
 Keep the host running. Its firewall must allow intranet connections on port 3000. An existing web server such as IIS or nginx can also serve `dist`.

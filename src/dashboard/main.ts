@@ -1,10 +1,5 @@
-import '../style.css';
 import './style.css';
-import '@fontsource-variable/dm-sans';
-import '@fontsource-variable/newsreader';
-import '../theme.ts';
-import * as Plotly from 'plotly.js-basic-dist-min';
-import type { PlotlyHTMLElement, PlotRelayoutEvent } from 'plotly.js';
+import uPlot from 'uplot';
 import { defaultTime, demoTable, describeColumn, eventColumns, groupColumns, PALETTE, phaseEvents, plotSamples, seriesStats, timeValues, type Dataset } from './data.ts';
 
 const get = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -16,20 +11,31 @@ const linked = get<HTMLInputElement>('linked-zoom');
 const markers = get<HTMLInputElement>('show-markers');
 const overviewStrip = get<HTMLElement>('overview-strip');
 const overviewChart = get<HTMLDivElement>('overview-chart');
-let overviewPlot: PlotlyHTMLElement | undefined;
+const CHART_HEIGHT = 220, OVERVIEW_HEIGHT = 96, SYNC_KEY = 'telemetry';
+let overviewPlot: uPlot | undefined;
 let data: Dataset = demoTable();
 let selected = new Set<string>();
 let timeColumn = defaultTime(data);
 let revision = 0;
 let syncing = false;
-let hovering = false;
 let zoom: [number, number] | undefined;
 let worker: Worker | undefined;
 let importing = 0;
 
 type Series = { column: string; label: string; color: string; x: number[]; y: (number | null)[]; cell: HTMLElement };
-type Panel = { key: string; node: HTMLElement; chart: HTMLDivElement; plot?: PlotlyHTMLElement; series: Series[] };
+type Panel = { key: string; node: HTMLElement; chart: HTMLDivElement; plot?: uPlot; series: Series[] };
 const panels = new Map<string, Panel>();
+
+// uPlot takes explicit sizes; a hidden view reports zero width and is skipped until shown again.
+const plotsByChart = new WeakMap<Element, uPlot>();
+const resizer = new ResizeObserver(entries => {
+  for (const entry of entries) {
+    const plot = plotsByChart.get(entry.target), width = Math.floor(entry.contentRect.width);
+    if (plot && width > 0 && width !== plot.width) plot.setSize({ width, height: plot.height });
+  }
+});
+function mount(chart: HTMLElement, plot: uPlot) { plotsByChart.set(chart, plot); resizer.observe(chart); }
+function unmount(chart: HTMLElement, plot?: uPlot) { resizer.unobserve(chart); plot?.destroy(); }
 
 function message(text: string, error = false) {
   status.textContent = text; status.classList.toggle('invalid', error);
@@ -40,7 +46,7 @@ function listQuantities() {
   list.replaceChildren();
   const quantities = data.columns.filter(c => c !== timeColumn);
   for (const column of quantities.filter(c => c.toLowerCase().includes(query))) {
-    const label = document.createElement('label'); label.className = 'quantity-option';
+    const label = document.createElement('label'); label.className = 'check';
     const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.checked = selected.has(column);
     const name = document.createElement('span'); name.textContent = column;
     checkbox.addEventListener('change', () => {
@@ -49,7 +55,7 @@ function listQuantities() {
     });
     label.append(checkbox, name); list.append(label);
   }
-  if (!list.childElementCount) { const p = document.createElement('p'); p.textContent = 'No matching quantities.'; list.append(p); }
+  if (!list.childElementCount) { const p = document.createElement('p'); p.className = 'note'; p.textContent = 'No matching quantities.'; list.append(p); }
   updateCount();
 }
 function updateCount() { get('selection-count').textContent = `${selected.size} / ${data.columns.length - 1}`; }
@@ -66,7 +72,7 @@ function loadDataset(next: Dataset, name: string, demo: boolean) {
   get('dataset-header').hidden = demo;
   get<HTMLInputElement>('quantity-search').value = '';
   message(data.omitted.length ? `Skipped columns: ${data.omitted.join(', ')}.` : '');
-  for (const panel of panels.values()) { if (panel.plot) Plotly.purge(panel.plot); panel.node.remove(); }
+  for (const panel of panels.values()) { unmount(panel.chart, panel.plot); panel.node.remove(); }
   panels.clear();
   listQuantities(); scheduleRender();
 }
@@ -87,18 +93,19 @@ async function parseInput(text: string, name: string) {
 }
 
 let renderTimer: ReturnType<typeof setTimeout>;
-function scheduleRender() { clearTimeout(renderTimer); revision++; renderTimer = setTimeout(() => void renderPlots(), 100); }
+function scheduleRender() { clearTimeout(renderTimer); revision++; renderTimer = setTimeout(renderPlots, 100); }
 
 function theme() {
   const style = getComputedStyle(document.documentElement);
   const read = (token: string) => style.getPropertyValue(token).trim();
   const dark = document.documentElement.dataset.theme !== 'light';
   return {
-    dark, ink: read('--ink'), muted: read('--muted'), line: read('--line'), accent: read('--accent'),
-    font: read('--font-body') || 'DM Sans Variable, sans-serif',
+    ink: read('--ink'), muted: read('--muted'), line: read('--line'), accent: read('--accent'), hot: read('--hot'), paper: read('--paper'),
+    mono: read('--font-mono') || 'monospace', sans: read('--font-sans') || 'sans-serif',
     palette: dark ? PALETTE.dark : PALETTE.light,
   };
 }
+type Colors = ReturnType<typeof theme>;
 
 function cell(row: HTMLElement, text: string, className?: string) {
   const span = document.createElement('span');
@@ -128,29 +135,79 @@ function updateCursor(at: number | null) {
       series.cell.textContent = at === null ? '—' : compact(series.y[nearest(series.x, at)]);
 }
 
-/* Plotly draws the spike on the chart under the pointer; the others are driven to the same
-   time so one crosshair reads across the whole grid. Fx is not in the published typings. */
-const Fx = (Plotly as unknown as { Fx?: { hover(gd: unknown, event: unknown, subplot?: string): void; unhover(gd: unknown): void } }).Fx;
+function axis(colors: Colors, extra: uPlot.Axis = {}): uPlot.Axis {
+  return {
+    stroke: colors.muted, font: `11px ${colors.mono}`, gap: 4, size: 50,
+    grid: { show: false }, ticks: { stroke: colors.line, width: 1, size: 4 },
+    values: (_, splits) => splits.map(compact), ...extra,
+  };
+}
 
-function mirrorHover(source: PlotlyHTMLElement, at: number | null) {
-  if (hovering || !Fx) return;
-  hovering = true;
+/** Phase changes are drawn as dotted rules in the warm colour, labelled on the overview. */
+function eventPlugin(events: { time: number; label: string }[], colors: Colors, labels: boolean): uPlot.Plugin {
+  return { hooks: { draw: [u => {
+    if (!events.length) return;
+    const { ctx, bbox } = u, ratio = devicePixelRatio;
+    ctx.save();
+    ctx.strokeStyle = colors.hot; ctx.globalAlpha = .7; ctx.lineWidth = ratio; ctx.setLineDash([2 * ratio, 4 * ratio]);
+    ctx.fillStyle = colors.hot; ctx.font = `${10 * ratio}px ${colors.mono}`; ctx.textBaseline = 'top';
+    for (const event of events) {
+      const left = Math.round(u.valToPos(event.time, 'x', true));
+      if (left < bbox.left || left > bbox.left + bbox.width) continue;
+      ctx.beginPath(); ctx.moveTo(left, bbox.top); ctx.lineTo(left, bbox.top + bbox.height); ctx.stroke();
+      if (labels) ctx.fillText(event.label, left + 3 * ratio, bbox.top + 2 * ratio);
+    }
+    ctx.restore();
+  }] } };
+}
+
+function fullRange(plot: uPlot): [number, number] {
+  const x = plot.data[0];
+  return [x[0], x[x.length - 1]];
+}
+
+/** One time range for every chart; the overview shades what lies outside it. */
+function applyZoom(next: [number, number] | undefined, source?: uPlot) {
+  zoom = next;
+  syncing = true;
   try {
     for (const panel of panels.values()) {
       if (!panel.plot || panel.plot === source) continue;
-      try { if (at === null) Fx.unhover(panel.plot); else Fx.hover(panel.plot, { xval: at }, 'xy'); } catch { /* the chart is mid-redraw */ }
+      const [min, max] = zoom ?? fullRange(panel.plot);
+      panel.plot.setScale('x', { min, max });
     }
-  } finally { hovering = false; }
+  } finally { syncing = false; }
+  overviewPlot?.redraw(false);
 }
 
-function eventShapes(events: { time: number; label: string }[], colors: ReturnType<typeof theme>) {
-  return events.map(event => ({
-    type: 'line' as const, x0: event.time, x1: event.time, yref: 'paper' as const, y0: 0, y1: 1,
-    line: { color: colors.muted, width: 1, dash: 'dot' as const }, layer: 'below' as const,
-  }));
+function onChartScale(plot: uPlot, key: string) {
+  if (key !== 'x' || syncing || plot.status !== 1 || !linked.checked) return;
+  const { min, max } = plot.scales.x, [first, last] = fullRange(plot);
+  applyZoom(min! <= first && max! >= last ? undefined : [min!, max!], plot);
 }
 
-async function renderPlots() {
+function exportPng(panel: Panel, title: string, colors: Colors) {
+  const plot = panel.plot; if (!plot) return;
+  const source = plot.ctx.canvas, ratio = devicePixelRatio, header = 44 * ratio;
+  const canvas = document.createElement('canvas');
+  canvas.width = source.width; canvas.height = source.height + header;
+  const ctx = canvas.getContext('2d')!;
+  ctx.fillStyle = colors.paper; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = colors.ink; ctx.font = `500 ${14 * ratio}px ${colors.sans}`; ctx.textBaseline = 'middle';
+  ctx.fillText(title, 12 * ratio, 16 * ratio);
+  ctx.font = `${11 * ratio}px ${colors.mono}`;
+  let left = 12 * ratio;
+  for (const series of panel.series) {
+    ctx.fillStyle = series.color; ctx.fillRect(left, 33 * ratio, 10 * ratio, 2 * ratio);
+    ctx.fillStyle = colors.muted; ctx.fillText(series.label, left + 14 * ratio, 34 * ratio);
+    left += (ctx.measureText(series.label).width + 30 * ratio);
+  }
+  ctx.drawImage(source, 0, header);
+  const link = document.createElement('a');
+  link.href = canvas.toDataURL('image/png'); link.download = `${title.replace(/[^a-z0-9_-]/gi, '_')}.png`; link.click();
+}
+
+function renderPlots() {
   const current = revision;
   get('empty-selection').hidden = selected.size > 0;
   let x: number[];
@@ -160,8 +217,8 @@ async function renderPlots() {
 
   const chosen = data.columns.filter(c => selected.has(c) && c !== timeColumn);
   const colors = theme();
-  const events = eventColumns(data).filter(c => c !== timeColumn).flatMap(c => phaseEvents(data, timeColumn, c));
   const eventSource = eventColumns(data).filter(c => c !== timeColumn);
+  const events = eventSource.flatMap(c => phaseEvents(data, timeColumn, c));
 
   // Grouping is computed over every quantity, so a hue follows its column through any filter.
   const groups = groupColumns(data.columns.filter(c => c !== timeColumn))
@@ -170,11 +227,10 @@ async function renderPlots() {
 
   for (const [key, panel] of panels) {
     if (groups.some(group => group.key === key)) continue;
-    if (panel.plot) Plotly.purge(panel.plot);
+    unmount(panel.chart, panel.plot);
     panel.node.remove(); panels.delete(key);
   }
 
-  const shapes = events.length ? eventShapes(events, colors) : [];
   for (const group of groups) {
     if (revision !== current) return;
     let panel = panels.get(group.key);
@@ -184,30 +240,31 @@ async function renderPlots() {
       panel = { key: group.key, node, chart, series: [] };
       panels.set(group.key, panel);
     }
+    unmount(panel.chart, panel.plot); panel.plot = undefined;
+    panel.chart.replaceChildren();
     panel.node.replaceChildren();
     panel.series = [];
 
     const head = document.createElement('div'); head.className = 'panel-head';
     const title = document.createElement('h3'); title.textContent = group.label;
     head.append(title);
-    if (group.unit) { const unit = document.createElement('span'); unit.className = 'unit-chip'; unit.textContent = group.unit; head.append(unit); }
+    if (group.unit) { const unit = document.createElement('span'); unit.className = 'chip'; unit.textContent = group.unit; head.append(unit); }
 
     const table = document.createElement('div'); table.className = 'series-table';
     const multi = group.columns.length > 1;
     table.classList.toggle('single', !multi);
     const header = document.createElement('div'); header.className = 'series-row series-labels';
     if (multi) cell(header, '');
-    for (const name of ['AT CURSOR', 'MIN', 'MAX', 'MEAN']) cell(header, name);
+    cell(header, 'AT CURSOR');
     table.append(header);
 
-    let reduced = false, crossesZero = false;
-    const traces = group.drawn.map(column => {
+    let reduced = false;
+    const tables: uPlot.AlignedData[] = [];
+    const seriesOptions: uPlot.Series[] = [{}];
+    for (const column of group.drawn) {
       const samples = plotSamples(x, data.values[column]);
-      const stats = seriesStats(data.values[column]);
-      const index = group.columns.indexOf(column);
-      const color = multi ? colors.palette[index % colors.palette.length] : colors.ink;
+      const color = multi ? colors.palette[group.columns.indexOf(column) % colors.palette.length] : colors.accent;
       reduced ||= samples.x.length < x.length;
-      crossesZero ||= stats.min < 0 && stats.max > 0;
       const label = multi ? describeColumn(column).component || column : column;
 
       const row = document.createElement('div'); row.className = 'series-row';
@@ -217,114 +274,105 @@ async function renderPlots() {
         name.prepend(swatch);
       }
       const cursor = cell(row, '—', 'series-cursor');
-      cell(row, compact(stats.min)); cell(row, compact(stats.max)); cell(row, compact(stats.mean));
       row.title = column;
       table.append(row);
-      panel!.series.push({ column, label, color, x: samples.x, y: samples.y, cell: cursor });
+      panel.series.push({ column, label, color, x: samples.x, y: samples.y, cell: cursor });
+      tables.push([samples.x, samples.y]);
+      seriesOptions.push({ label, stroke: color, width: 1.5, spanGaps: false, points: { show: markers.checked, size: 4, fill: color, stroke: color } });
+    }
 
-      return {
-        type: 'scatter' as const, mode: (markers.checked ? 'lines+markers' : 'lines') as 'lines' | 'lines+markers',
-        name: label, x: samples.x, y: samples.y, line: { color, width: 1.6 }, marker: { size: 3, color },
-        connectgaps: false, hovertemplate: '%{y:.6g}<extra></extra>',
-      };
-    });
-
-    if (reduced) { const chip = document.createElement('span'); chip.className = 'sampled-chip'; chip.textContent = 'sampled'; chip.title = 'Drawn from per-bin extrema. Statistics use every sample.'; head.append(chip); }
+    if (reduced) { const chip = document.createElement('span'); chip.className = 'chip sampled-chip'; chip.textContent = 'sampled'; chip.title = 'Drawn from per-bin extrema.'; head.append(chip); }
+    const exportButton = document.createElement('button'); exportButton.type = 'button'; exportButton.className = 'export-png'; exportButton.textContent = 'PNG';
+    exportButton.title = 'Save this chart as a PNG image';
+    const target = panel;
+    exportButton.addEventListener('click', () => exportPng(target, group.unit ? `${group.label} [${group.unit}]` : group.label, theme()));
+    head.append(exportButton);
     panel.node.append(head, table, panel.chart);
     grid.append(panel.node);
 
-    const plot = await Plotly.react(panel.chart, traces, {
-      paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
-      font: { family: colors.font, color: colors.muted, size: 10 },
-      margin: { t: 6, r: 14, b: 30, l: 56 }, height: 232,
-      xaxis: {
-        automargin: true, nticks: 5, gridcolor: colors.line, zeroline: false, showspikes: true,
-        spikemode: 'across', spikesnap: 'cursor', spikedash: 'dot', spikethickness: 1, spikecolor: colors.accent,
-        ...(zoom ? { range: zoom } : { autorange: true }),
+    // Downsampled series keep their own sample times; join aligns them and leaves real gaps as gaps.
+    const aligned = tables.length === 1 ? tables[0] : uPlot.join(tables);
+    const plot = new uPlot({
+      width: Math.max(200, panel.chart.clientWidth), height: CHART_HEIGHT,
+      legend: { show: false },
+      scales: { x: { time: false, ...(zoom ? { min: zoom[0], max: zoom[1] } : {}) } },
+      axes: [axis(colors, { size: 32 }), axis(colors)],
+      series: seriesOptions,
+      cursor: { sync: { key: SYNC_KEY }, y: false, drag: { x: true, y: false }, points: { size: 7 } },
+      plugins: [eventPlugin(events, colors, false)],
+      hooks: {
+        setCursor: [u => updateCursor(u.cursor.idx == null ? null : u.data[0][u.cursor.idx])],
+        setScale: [onChartScale],
       },
-      yaxis: { automargin: true, nticks: 5, gridcolor: colors.line, zeroline: crossesZero, zerolinecolor: colors.line },
-      shapes, showlegend: false, hovermode: 'x', dragmode: 'zoom',
-    }, {
-      responsive: true, displaylogo: false, scrollZoom: false, displayModeBar: 'hover',
-      modeBarButtons: [['toImage'], ['zoom2d', 'pan2d'], ['zoomIn2d', 'zoomOut2d', 'autoScale2d', 'resetScale2d']],
-      toImageButtonOptions: { filename: group.label.replace(/[^a-z0-9_-]/gi, '_'), format: 'png', scale: 2, width: 1100, height: 550 },
-    });
-    if (revision !== current) { Plotly.purge(plot); return; }
-
-    if (panel.plot !== plot) {
-      panel.plot = plot;
-      plot.on('plotly_relayout', (event: PlotRelayoutEvent) => void syncZoom(plot, event));
-      plot.on('plotly_hover', (event: { xvals?: unknown[] }) => {
-        const at = Number(event.xvals?.[0]);
-        if (!Number.isFinite(at)) return;
-        updateCursor(at); mirrorHover(plot, at);
-      });
-      plot.on('plotly_unhover', () => { updateCursor(null); mirrorHover(plot, null); });
-      panel.node.addEventListener('pointerenter', () => panel!.node.classList.add('active'));
-      panel.node.addEventListener('pointerleave', () => panel!.node.classList.remove('active'));
-    }
-    await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+    }, aligned, panel.chart);
+    panel.plot = plot;
+    mount(panel.chart, plot);
   }
 
   if (revision !== current) return;
-  await renderOverview(x, chosen, groups, colors, events, eventSource);
+  renderOverview(x, chosen, groups, colors, events, eventSource);
   renderStatus.textContent = '';
 }
 
 /* One band for the whole run: each quantity is scaled to its own range, so the strip shows
-   where things happen rather than how large they are. The slider sets the range on every chart. */
-async function renderOverview(
+   where things happen rather than how large they are. Dragging sets the range on every chart. */
+function renderOverview(
   x: number[], chosen: string[],
   groups: { key: string; columns: string[]; drawn: string[] }[],
-  colors: ReturnType<typeof theme>,
+  colors: Colors,
   events: { time: number; label: string }[], eventSource: string[],
 ) {
+  if (overviewPlot) { unmount(overviewChart, overviewPlot); overviewPlot = undefined; }
   overviewStrip.hidden = !chosen.length;
-  if (!chosen.length) { Plotly.purge(overviewChart); overviewPlot = undefined; return; }
-  const traces = groups.flatMap(group => group.drawn.map(column => {
+  if (!chosen.length) return;
+  const tables: uPlot.AlignedData[] = [];
+  const series: uPlot.Series[] = [{}];
+  for (const group of groups) for (const column of group.drawn) {
     const samples = plotSamples(x, data.values[column], 1200);
     const stats = seriesStats(data.values[column]);
     const span = stats.max - stats.min;
     const multi = group.columns.length > 1;
     const color = multi ? colors.palette[group.columns.indexOf(column) % colors.palette.length] : colors.muted;
-    return {
-      type: 'scatter' as const, mode: 'lines' as const, name: column, x: samples.x,
-      y: samples.y.map(v => v === null ? null : span ? (v - stats.min) / span : .5),
-      line: { color, width: 1 }, opacity: .34, connectgaps: false, hoverinfo: 'skip' as const,
-    };
-  }));
+    tables.push([samples.x, samples.y.map(v => v === null ? null : span ? (v - stats.min) / span : .5)]);
+    series.push({ stroke: color, width: 1, alpha: .45, spanGaps: false, points: { show: false } });
+  }
   get('overview-note').textContent = [
     `Whole run over ${timeColumn}, each quantity scaled to its own range.`,
-    'Drag to set the time range on every chart.',
+    'Drag to set the time range on every chart; double-click to reset.',
     events.length ? `Dotted rules mark ${eventSource.join(' and ')} changes.` : '',
   ].filter(Boolean).join(' ');
-  const plot = await Plotly.react(overviewChart, traces, {
-    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
-    font: { family: colors.font, color: colors.muted, size: 10 },
-    margin: { t: 14, r: 14, b: 22, l: 56 }, height: 122,
-    xaxis: { nticks: 8, gridcolor: colors.line, zeroline: false, rangeslider: { visible: true, thickness: .62, bgcolor: 'rgba(0,0,0,0)', bordercolor: colors.line, borderwidth: 1 }, ...(zoom ? { range: zoom } : { autorange: true }) },
-    yaxis: { visible: false, fixedrange: true, range: [-.06, 1.06] },
-    shapes: eventShapes(events, colors),
-    annotations: events.map(event => ({ x: event.time, y: 1.04, yref: 'paper' as const, text: event.label, showarrow: false, font: { size: 9, color: colors.muted }, xanchor: 'left' as const, xshift: 3 })),
-    showlegend: false, hovermode: false as const, dragmode: 'zoom',
-  }, { responsive: true, displaylogo: false, scrollZoom: false, displayModeBar: false });
-  if (overviewPlot !== plot) {
-    overviewPlot = plot;
-    plot.on('plotly_relayout', (event: PlotRelayoutEvent) => void syncZoom(plot, event));
-  }
-}
 
-async function syncZoom(source: PlotlyHTMLElement, event: PlotRelayoutEvent) {
-  if (syncing || !linked.checked) return;
-  const e = event as Record<string, unknown>;
-  if (e['xaxis.autorange'] !== true && e['xaxis.range[0]'] === undefined && e['xaxis.range'] === undefined) return;
-  const range = e['xaxis.range'] as [number, number] | undefined;
-  zoom = e['xaxis.autorange'] === true ? undefined : range ?? [Number(e['xaxis.range[0]']), Number(e['xaxis.range[1]'])];
-  syncing = true;
-  const targets = [...panels.values()].map(p => p.plot).filter((p): p is PlotlyHTMLElement => !!p && p !== source);
-  if (overviewPlot && overviewPlot !== source) targets.push(overviewPlot);
-  try { await Promise.all(targets.map(p => Plotly.relayout(p, zoom ? { 'xaxis.range': zoom } : { 'xaxis.autorange': true }))); }
-  finally { syncing = false; }
+  const shadeOutsideZoom: uPlot.Plugin = { hooks: { draw: [u => {
+    if (!zoom) return;
+    const { ctx, bbox } = u, ratio = devicePixelRatio;
+    const from = Math.max(bbox.left, u.valToPos(zoom[0], 'x', true)), to = Math.min(bbox.left + bbox.width, u.valToPos(zoom[1], 'x', true));
+    ctx.save();
+    ctx.fillStyle = colors.line;
+    ctx.fillRect(bbox.left, bbox.top, from - bbox.left, bbox.height);
+    ctx.fillRect(to, bbox.top, bbox.left + bbox.width - to, bbox.height);
+    ctx.strokeStyle = colors.accent; ctx.lineWidth = ratio;
+    ctx.strokeRect(from, bbox.top + ratio / 2, to - from, bbox.height - ratio);
+    ctx.restore();
+  }] } };
+
+  const plot = new uPlot({
+    width: Math.max(200, overviewChart.clientWidth), height: OVERVIEW_HEIGHT,
+    legend: { show: false },
+    scales: { x: { time: false }, y: { range: [-.06, 1.06] } },
+    axes: [axis(colors, { size: 24 }), { show: false }],
+    series,
+    cursor: { x: false, y: false, points: { show: false }, drag: { x: true, y: false, setScale: false } },
+    plugins: [eventPlugin(events, colors, true), shadeOutsideZoom],
+    hooks: { setSelect: [u => {
+      if (u.select.width < 3) return;
+      const range: [number, number] = [u.posToVal(u.select.left, 'x'), u.posToVal(u.select.left + u.select.width, 'x')];
+      u.setSelect({ left: 0, top: 0, width: 0, height: 0 }, false);
+      applyZoom(range);
+    }] },
+  }, tables.length === 1 ? tables[0] : uPlot.join(tables), overviewChart);
+  plot.over.addEventListener('dblclick', () => applyZoom(undefined));
+  overviewPlot = plot;
+  mount(overviewChart, plot);
 }
 
 get<HTMLInputElement>('data-file').addEventListener('change', async event => {
@@ -353,17 +401,10 @@ get('quantity-search').addEventListener('input', listQuantities);
 get('select-all').addEventListener('click', () => { selected = new Set(data.columns.filter(c => c !== timeColumn)); listQuantities(); scheduleRender(); });
 get('select-none').addEventListener('click', () => { selected.clear(); listQuantities(); scheduleRender(); });
 markers.addEventListener('change', scheduleRender);
-get('reset-zoom').addEventListener('click', () => { zoom = undefined; scheduleRender(); });
+get('reset-zoom').addEventListener('click', () => applyZoom(undefined));
 get<HTMLSelectElement>('plot-columns').addEventListener('change', event => {
   grid.dataset.columns = (event.target as HTMLSelectElement).value;
-  panels.forEach(panel => panel.plot && Plotly.Plots.resize(panel.plot));
 });
-new MutationObserver(scheduleRender).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-appearance', 'data-font'] });
-export function setVisible(visible: boolean) {
-  if (!visible) return;
-  requestAnimationFrame(() => {
-    panels.forEach(panel => panel.plot && Plotly.Plots.resize(panel.plot));
-    if (overviewPlot) Plotly.Plots.resize(overviewPlot);
-  });
-}
+// Canvas colours are read from the tokens, so a theme change redraws.
+new MutationObserver(scheduleRender).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 loadDataset(data, 'Synthetic motion demo', true);

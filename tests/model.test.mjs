@@ -15,7 +15,8 @@ for (const definition of models) {
         triangles += (object.geometry.index?.count ?? object.geometry.attributes.position.count) / 3;
         for (const value of object.geometry.attributes.position.array) assert.ok(Number.isFinite(value));
       });
-      assert.ok(triangles < 30000, `Triangle count: ${triangles}`);
+      // Authored models are a few hundred thousand triangles; frames render only on interaction.
+      assert.ok(triangles < 400000, `Triangle count: ${triangles}`);
       console.log(`${definition.title}: ${model.parts.length} pieces, ${triangles} triangles.`);
       assert.ok(!model.bounds.isEmpty());
       for (const t of [0, .5, 1]) {

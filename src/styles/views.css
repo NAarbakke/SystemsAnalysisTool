@@ -1,0 +1,65 @@
+@layer views {
+  /* Every view fills the window; its panels float over the scene below the navigation. */
+  :is(#assembly-view, #flyover-view, #engines-view, #telemetry-view) { position: fixed; inset: 0; overflow: hidden; }
+  .readout { margin: 12px 0; padding: 10px 0; border-block: 1px solid var(--line); font: var(--fs-xs)/1.8 var(--font-mono); font-variant-numeric: tabular-nums; white-space: pre-line; overflow-wrap: anywhere; }
+  .readout:empty { display: none; }
+  output { font-variant-numeric: tabular-nums; color: var(--ink); }
+  label > output { float: right; text-transform: none; letter-spacing: 0; }
+
+  /* Assembly */
+  #viewport { position: absolute; inset: 0; touch-action: none; }
+  #viewport canvas { display: block; width: 100%; height: 100%; }
+  .assembly-source { position: absolute; top: var(--overlay-top); left: var(--gutter); width: 280px; max-height: calc(100svh - var(--overlay-top) - 90px); }
+  #component-panel { position: absolute; top: var(--overlay-top); right: var(--gutter); width: 272px; max-height: calc(100svh - var(--overlay-top) - 90px); }
+  .part-list { display: grid; gap: 1px; max-height: 38svh; margin-top: 8px; overflow: auto; scrollbar-width: thin; }
+  .part-list button, #component-buttons button {
+    display: grid; grid-template-columns: 26px minmax(0, 1fr); justify-content: stretch; align-items: baseline; gap: 6px;
+    min-height: 0; padding: 6px 8px; border-color: transparent; background: transparent; text-align: left; font-weight: 400; overflow-wrap: anywhere;
+  }
+  .part-list button span:first-child, #component-buttons button span:first-child { font: var(--fs-xs) var(--font-mono); color: var(--muted); }
+  .part-list button[aria-pressed='true'] span:first-child, #component-buttons button[aria-pressed='true'] span:first-child { color: var(--accent); }
+  #component-detail { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+  #component-name { font-size: var(--fs-lg); overflow-wrap: anywhere; }
+  #component-operation { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .readings { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; align-items: baseline; margin: 10px 0 0; }
+  .readings dt { color: var(--muted); font-size: var(--fs-xs); }
+  .readings dd { margin: 0; font: var(--fs-sm) var(--font-mono); font-variant-numeric: tabular-nums; }
+  .properties { font-size: var(--fs-xs); margin: 4px 0 0; }
+  .properties dt { margin-top: 10px; font: var(--fs-xs) var(--font-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .properties dd { margin: 2px 0 0; overflow-wrap: anywhere; }
+  .separation-dock { position: absolute; right: var(--gutter); bottom: 24px; width: 272px; }
+  .separation-dock .label { margin: 0; }
+  #error { position: absolute; z-index: 6; left: 50%; top: 45%; transform: translate(-50%, -50%); width: min(460px, calc(100% - 40px)); padding: 20px; border: 1px solid var(--danger); border-radius: var(--r-md); background: var(--paper); color: var(--danger); }
+  noscript { position: absolute; top: 50%; left: 30px; }
+
+  /* Flyover */
+  #globe { position: absolute; inset: 0; }
+  .flyover-panel { position: absolute; top: var(--overlay-top); left: var(--gutter); width: 290px; max-height: calc(100svh - var(--overlay-top) - 120px); }
+  #flight-header { display: block; padding: 8px; font-size: var(--fs-xs); background: var(--field); border: 1px solid var(--line); border-radius: var(--r-sm); overflow-wrap: anywhere; user-select: all; }
+  .flight-controls { position: absolute; left: var(--gutter); right: var(--gutter); bottom: var(--gutter); max-width: 760px; margin-inline: auto; display: grid; grid-template-columns: 200px minmax(0, 1fr); align-items: center; gap: 24px; padding: 12px 18px; overflow: visible; }
+  .flight-controls .actions { margin: 0; }
+  .flight-controls .label { margin: 0; }
+  #save-map-view input { flex: 1 1 140px; }
+  #save-map-view button { flex: 0 0 auto; }
+  .saved-view-row { display: flex; gap: 6px; margin-top: 6px; }
+  .saved-view-row button:first-child { flex: 1; justify-content: flex-start; overflow-wrap: anywhere; }
+  .cesium-viewer-bottom { left: auto !important; right: 12px; bottom: 96px !important; font-size: 10px !important; }
+  .cesium-credit-logoContainer { display: none !important; }
+
+  /* Engines and Telemetry own their markup; the shell only sizes them. */
+  #engines-view, #telemetry-view { padding: var(--overlay-top) var(--gutter) var(--gutter); }
+
+  @media (max-width: 1050px) and (min-width: 761px) {
+    .assembly-source, #component-panel, .separation-dock { width: 230px; }
+  }
+  @media (max-width: 760px) {
+    /* The model or globe stays fixed behind; its panels start below the first screen and scroll over it. */
+    #assembly-view, #flyover-view { overflow: auto; padding: 60svh var(--gutter) 110px; }
+    #viewport, #globe { position: fixed; }
+    .assembly-source, #component-panel, .flyover-panel { position: relative; inset: auto; width: auto; max-height: 34svh; }
+    #component-panel { margin-top: 12px; }
+    .separation-dock { position: fixed; left: var(--gutter); right: var(--gutter); width: auto; padding: 10px 14px; border-radius: var(--r-md); background: var(--glass); backdrop-filter: var(--blur); }
+    .flight-controls { position: fixed; grid-template-columns: 1fr; gap: 10px; }
+    .cesium-viewer-bottom { bottom: 150px !important; }
+  }
+}

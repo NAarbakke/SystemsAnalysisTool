@@ -61,4 +61,4 @@ The demo contains independent synthetic motion signals for UI testing, including
 
 ## Stack
 
-TypeScript + Vite, Plotly.js basic (SVG line charts), Papa Parse, and a module Web Worker. Fonts and libraries are bundled locally. No CDN, backend, live stream, cloud account, or separate ZIP. The current integration is file-based.
+TypeScript + Vite, uPlot (canvas line charts), Papa Parse, and a module Web Worker. Fonts and libraries are bundled locally. No CDN, backend, live stream, cloud account, or separate ZIP. The current integration is file-based.

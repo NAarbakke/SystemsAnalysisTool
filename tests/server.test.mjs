@@ -1,15 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
-import { mkdtemp, writeFile, mkdir } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
+import { mkdtemp, writeFile, mkdir, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { startServer } from '../scripts/serve.mjs';
 
 test('local server serves static assets and confines requests to its build folder', async (t) => {
-  const outputs = fileURLToPath(new URL('../outputs/', import.meta.url));
-  await mkdir(outputs, { recursive: true });
-  const fixture = await mkdtemp(path.join(outputs, 'server-test-'));
+  const fixture = await mkdtemp(path.join(tmpdir(), 'server-test-'));
+  t.after(() => rm(fixture, { recursive: true, force: true }));
   const root = path.join(fixture, 'dist');
   await mkdir(root);
   await writeFile(path.join(root, 'index.html'), '<!doctype html><title>Local viewer</title>');

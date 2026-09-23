@@ -1,10 +1,7 @@
-import './style.css';
-import '@fontsource-variable/dm-sans';
-import '@fontsource-variable/newsreader';
-import '@fontsource-variable/newsreader/wght-italic.css';
 import './theme.ts';
+import './styles/views.css';
 import {
-  ACESFilmicToneMapping, Box3, DirectionalLight, HemisphereLight, PerspectiveCamera,
+  Box3, DirectionalLight, NeutralToneMapping, HemisphereLight, PerspectiveCamera,
   PMREMGenerator, Scene, Vector3, WebGLRenderer,
 } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -37,19 +34,23 @@ function showError(message: string) {
 }
 
 try {
-  const renderer = new WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.toneMapping = ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  const renderer = new WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+  // Frames are drawn only on interaction, so supersample: at least 2x, up to 3x on high-DPI screens.
+  const supersample = () => renderer.setPixelRatio(Math.min(Math.max(window.devicePixelRatio, 1) * 2, 3));
+  supersample();
+  renderer.toneMapping = NeutralToneMapping;
+  renderer.toneMappingExposure = 1;
   host.appendChild(renderer.domElement);
 
   const scene = new Scene();
   let model = definition.create();
   let imported: { definition: ModelDefinition; assembly: Assembly } | undefined;
-  scene.add(model.root, new HemisphereLight(0xffffff, 0x789099, .9));
-  const key = new DirectionalLight(0xffffff, 2.2);
+  scene.add(model.root, new HemisphereLight(0xffffff, 0x404040, .6));
+  const key = new DirectionalLight(0xffffff, 2.4);
   key.position.set(3, 6, 5);
-  scene.add(key);
+  const rim = new DirectionalLight(0xdfe8ff, 1.2);
+  rim.position.set(-5, 2, -6);
+  scene.add(key, rim);
   const room = new RoomEnvironment();
   const pmrem = new PMREMGenerator(renderer);
   const environment = pmrem.fromScene(room, .04);
@@ -91,6 +92,7 @@ try {
   function resize() {
     const width = host.clientWidth, height = host.clientHeight;
     if (!width || !height) return;
+    supersample();
     renderer.setSize(width, height);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
@@ -121,7 +123,7 @@ try {
   }
 
   function describeModel() {
-    if (assemblyVisible) document.title = `${definition.title} — SystemsAnalysisTool`;
+    if (assemblyVisible) document.title = `${definition.title} — Systems Analysis Tool`;
     host.setAttribute('aria-label', `Interactive ${definition.title} model. Drag to rotate and scroll to zoom.`);
   }
 

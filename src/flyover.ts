@@ -148,11 +148,11 @@ export async function createFlyover() {
         const geo = geographicAt(duration * i / count);
         routePositions.push(Cartesian3.fromRadians(geo.longitude, geo.latitude, geo.height));
       }
-      viewer.entities.add({ polyline: { positions: routePositions, width: 2, material: Color.CYAN.withAlpha(0.75) } });
+      viewer.entities.add({ polyline: { positions: routePositions, width: 2, material: Color.fromCssColorString('#7fb2e5').withAlpha(0.85) } });
       for (const [index, name] of [[0, 'Start'], [samples.length - 1, 'Finish']] as const) {
         const sample = samples[index];
         viewer.entities.add({ position: Cartesian3.fromDegrees(sample.longitude, sample.latitude, sample.altitude),
-          point: { pixelSize: 8, color: Color.WHITE }, label: { text: name, font: '14px sans-serif', showBackground: true, pixelOffset: new Cartesian2(0, -24) } });
+          point: { pixelSize: 8, color: Color.WHITE }, label: { text: name, font: '13px "IBM Plex Mono", monospace', showBackground: true, pixelOffset: new Cartesian2(0, -24) } });
       }
       const position = new CallbackPositionProperty((time, result) => {
         const geo = geographicAt(JulianDate.secondsDifference(time!, start));
@@ -193,7 +193,7 @@ export async function createFlyover() {
         }
       }
       vehicle = viewer.entities.add({ name: 'Vehicle', position, orientation,
-        point: { pixelSize: 6, color: Color.ORANGE },
+        point: { pixelSize: 6, color: Color.fromCssColorString('#f59a4a') },
         viewFrom: new Cartesian3(-350000, -350000, 220000),
         ...(modelURL ? { model: { uri: modelURL, minimumPixelSize: 150, scale: 1500, lightColor: new Color(2, 2, 2) } } : {}),
       });

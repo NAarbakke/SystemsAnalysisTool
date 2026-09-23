@@ -1,86 +1,77 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="A simple, local 3D exploded assembly viewer." />
-    <meta name="theme-color" content="#eeede8" />
+    <meta name="description" content="Explore 3D assemblies, engine schematics, flight replays and telemetry in the browser." />
+    <meta name="theme-color" content="#000000" />
     <script>
-      var appearance = 'dark', fontChoice = 'modern';
-      try {
-        appearance = localStorage.getItem('viewer-appearance') || localStorage.getItem('map-appearance') || (localStorage.getItem('viewer-theme') === 'light' ? 'ivory' : 'obsidian');
-        fontChoice = localStorage.getItem('viewer-font') || 'modern';
-      } catch {}
-      appearance = appearance === 'ivory' || appearance === 'light' ? 'light' : 'dark';
-      if (!['editorial','modern','technical'].includes(fontChoice)) fontChoice = 'modern';
-      document.documentElement.dataset.appearance = appearance;
-      document.documentElement.dataset.theme = appearance;
-      document.documentElement.dataset.font = fontChoice;
+      try { if (localStorage.getItem('viewer-appearance') === 'light') document.documentElement.dataset.theme = 'light'; } catch {}
     </script>
-    <title>SystemsAnalysisTool</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <title>Systems Analysis Tool</title>
   </head>
   <body>
     <nav class="view-menu" aria-label="Viewer mode">
-      <div class="wordmark"><div><strong>System Modelling Tool</strong></div></div>
-      <div class="mode-switch"><button id="assembly-mode" type="button" aria-pressed="true">Assembly</button><button id="flyover-mode" type="button" aria-pressed="false">Flyover</button><button id="telemetry-mode" type="button" aria-pressed="false">Telemetry</button><button id="engines-mode" type="button" aria-pressed="false">Engines</button></div>
-      <div class="nav-tools"><div data-appearance-host></div></div>
+      <div class="wordmark"><strong>Systems Analysis Tool</strong></div>
+      <div class="mode-switch"><button id="assembly-mode" type="button" aria-pressed="true">Assembly</button><button id="engines-mode" type="button" aria-pressed="false">Engines</button><button id="flyover-mode" type="button" aria-pressed="false">Flyover</button><button id="telemetry-mode" type="button" aria-pressed="false">Telemetry</button></div>
+      <button id="theme-toggle" type="button" aria-label="Switch colour mode"><svg class="moon" viewBox="0 0 16 16" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 1 1 6.5 3a4.5 4.5 0 0 0 6.5 6.5Z"/></svg><svg class="sun" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.4 1.4M11.6 11.6 13 13M3 13l1.4-1.4M11.6 4.4 13 3"/></svg><span id="theme-name">Dark</span></button>
     </nav>
+
     <main id="assembly-view">
-      <header>
-        <label class="sr-only" for="model-picker">Choose model</label>
+      <div id="viewport" role="img" aria-label="Interactive assembly model. Drag to rotate and scroll to zoom."></div>
+      <header class="panel assembly-source">
+        <label for="model-picker">Model</label>
         <select id="model-picker" disabled></select>
-        <label class="assembly-file-label" for="assembly-file">Import assembly (.glb, .stl, .step)</label>
+        <label for="assembly-file">Import assembly · GLB, STL, STEP</label>
         <input id="assembly-file" type="file" accept=".glb,.stl,.stp,.step,model/gltf-binary,model/stl,model/step" disabled>
-        <div class="assembly-import-help"><button id="assembly-example" type="button">Example GLB</button></div>
-        <p id="assembly-import-status" class="coordinate-note" role="status"></p>
+        <div class="actions"><button id="assembly-example" type="button">Load example GLB</button></div>
+        <p id="assembly-import-status" class="note" role="status"></p>
       </header>
-<div id="viewport" role="img" aria-label="Interactive SS-27 exterior model. Drag to rotate and scroll to zoom."></div>
-      <aside id="component-panel" aria-label="Assembly components">
-        <h2>Components</h2>
+      <aside id="component-panel" class="panel" aria-label="Assembly components">
+        <div class="panel-title"><h2>Components</h2><span id="component-count" class="eyebrow"></span></div>
         <label class="sr-only" for="component-search">Find component</label>
         <input id="component-search" type="search" placeholder="Find component">
-        <label class="sr-only" for="component-list">Choose component</label>
-        <select id="component-list" size="5"></select>
-        <section id="component-detail" aria-live="polite"><h3 id="component-name">Select a component</h3><p id="component-material"></p></section>
+        <div id="component-list" class="part-list" role="group" aria-label="Components"></div>
+        <section id="component-detail" aria-live="polite"><h3 id="component-name">Select a component</h3><p id="component-material" class="note"></p></section>
         <section id="component-operation" hidden aria-label="Component operating readings">
-          <h3>Operating readings</h3><p id="component-data-source" class="component-badge"></p>
+          <p class="eyebrow">Operating readings</p><p id="component-data-source" class="note"></p>
           <label id="component-stage-label" for="component-stage">Snapshot</label><select id="component-stage"></select>
-          <dl id="component-readings" aria-live="polite"></dl>
+          <dl id="component-readings" class="readings" aria-live="polite"></dl>
         </section>
-        <details id="component-cad-properties" hidden><summary>CAD properties</summary><dl id="component-properties"></dl></details>
+        <details id="component-cad-properties" hidden><summary>CAD properties</summary><dl id="component-properties" class="properties"></dl></details>
       </aside>
-      <div class="controls control-dock">
-        <div class="separation"><label for="separation">PART SEPARATION <output id="separation-value" for="separation">0%</output></label><input id="separation" type="range" min="0" max="100" step="1" value="0" disabled></div>
-        
+      <div class="separation-dock">
+        <label class="label" for="separation">Part separation <output id="separation-value" for="separation">0%</output></label>
+        <input id="separation" type="range" min="0" max="100" step="1" value="0" disabled>
       </div>
       <p id="status" class="sr-only" role="status" aria-live="polite">Preparing model.</p>
       <p id="error" role="alert" hidden></p>
       <noscript>This viewer requires JavaScript to display the model.</noscript>
     </main>
+
     <section id="flyover-view" hidden aria-label="Earth flyover">
       <div id="globe"></div>
-      <aside class="flyover-panel">
-
-        
+      <aside class="panel flyover-panel">
         <label for="flyover-model">Vehicle</label><select id="flyover-model"></select>
-        <label class="notam-toggle"><input id="show-notams" type="checkbox" checked disabled> Show NOTAM areas</label>
-        <details><summary>Demo NOTAM areas</summary><p id="notam-status" class="coordinate-note">Loading local areas…</p><div id="notam-list"></div></details>
+        <label class="check"><input id="show-notams" type="checkbox" checked disabled> Show NOTAM areas</label>
+        <div class="actions"><button id="flight-overview" type="button" disabled>Whole route</button><button id="flight-follow" type="button" aria-pressed="false" disabled>Follow vehicle</button></div>
+        <p id="flight-position" class="readout"></p>
+        <details><summary>Demo NOTAM areas</summary><p id="notam-status" class="note">Loading local areas…</p><div id="notam-list"></div></details>
         <details><summary>Map source</summary>
           <label for="map-source">Source</label>
           <select id="map-source" disabled><option>Loading sources…</option></select>
-          <p id="source-network" class="coordinate-note"></p>
-          <p id="map-status" class="coordinate-note" role="status"></p>
+          <p id="source-network" class="note"></p>
+          <p id="map-status" class="note" role="status"></p>
           <button id="map-retry" hidden type="button">Retry source</button>
           <label for="map-quality">Display quality</label>
           <select id="map-quality"><option value="high">High</option><option value="native">Native</option><option value="balanced">Balanced</option></select>
         </details>
         <details><summary>Saved views</summary>
-          <form id="save-map-view"><label for="map-view-name">Name</label><input id="map-view-name" maxlength="48" required placeholder="View name"><button type="submit">Save view</button></form>
-          <div id="saved-view-list"></div><p id="saved-view-status" role="status"></p>
+          <form id="save-map-view" class="actions"><label class="sr-only" for="map-view-name">Name</label><input id="map-view-name" maxlength="48" required placeholder="View name"><button type="submit">Save view</button></form>
+          <div id="saved-view-list"></div><p id="saved-view-status" class="note" role="status"></p>
         </details>
-        <div class="pose-actions"><button id="flight-overview" type="button" disabled>Whole route</button><button id="flight-follow" type="button" aria-pressed="false" disabled>Follow vehicle</button></div>
-        <p id="flight-position" class="coordinate-note"></p>
-        <details id="state-readout" hidden><summary>State vector readout</summary><p id="flight-state" class="coordinate-note"></p></details>
+        <details id="state-readout" hidden><summary>State vector readout</summary><p id="flight-state" class="readout"></p></details>
         <details><summary>Load a flight</summary>
           <label for="flight-dof">Input type</label><select id="flight-dof"><option value="trajectory">Position series</option><option value="3">3DOF — position + velocity</option><option value="6">6DOF — position + velocity + attitude + rates</option></select>
           <div id="state-options" hidden>
@@ -93,22 +84,22 @@
               <label for="state-units">Euler angles / body rates</label><select id="state-units"><option value="degrees">Degrees / degrees per second</option><option value="radians">Radians / radians per second</option></select>
             </div>
           </div>
-          <p id="flight-format-help" class="coordinate-note">s · degrees · metres (WGS84)</p>
+          <p id="flight-format-help" class="note">s · degrees · metres (WGS84)</p>
           <code id="flight-header">time,latitude,longitude,altitude</code>
           <label for="flight-csv">Flight CSV</label><textarea id="flight-csv" rows="6" spellcheck="false"></textarea>
           <label for="flight-file">Open CSV file</label><input id="flight-file" type="file" accept=".csv,text/csv">
-          
-          <div class="pose-actions"><button id="flight-load" type="button" disabled>Load flight</button><button id="flight-example" type="button" disabled>Example</button></div>
+          <div class="actions"><button id="flight-load" class="primary" type="button" disabled>Load flight</button><button id="flight-example" type="button" disabled>Example</button></div>
         </details>
-        <p id="flight-message" role="status"></p>
-        
+        <p id="flight-message" class="note" role="status"></p>
       </aside>
-      <div class="flight-controls control-dock">
-        <div class="playback-buttons"><button id="flight-play" type="button" disabled>Play</button><button id="flight-restart" type="button" disabled>Restart</button></div>
-        <div class="flight-timeline"><label for="flight-time">FLIGHT REPLAY <output id="flight-time-value">0.0 / 60.0 s</output></label><input id="flight-time" type="range" min="0" max="60" step="any" value="0" disabled></div>
-        
+      <div class="panel flight-controls">
+        <div class="actions"><button id="flight-play" class="primary" type="button" disabled>Play</button><button id="flight-restart" type="button" disabled>Restart</button></div>
+        <div><label class="label" for="flight-time">Flight replay <output id="flight-time-value">0.0 / 60.0 s</output></label><input id="flight-time" type="range" min="0" max="60" step="any" value="0" disabled></div>
       </div>
     </section>
-    <section id="telemetry-view" aria-label="Telemetry" hidden></section><section id="engines-view" aria-label="Engines" hidden><iframe id="engines-frame" title="Engine dashboard"></iframe></section><script type="module" src="/src/main.ts"></script>
+
+    <section id="engines-view" aria-label="Engines" hidden></section>
+    <section id="telemetry-view" aria-label="Telemetry" hidden></section>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

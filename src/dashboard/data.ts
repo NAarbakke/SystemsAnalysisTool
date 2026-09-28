@@ -132,7 +132,7 @@ export const MAX_GROUP = Math.max(...Object.values(FAMILIES).reduce((counts, fam
 /* A hue identifies a component within one vector, never a position in a list, so filtering the
    selection never repaints the survivors. Both sets are validated against the app surfaces for
    colour-vision separation and contrast, and each holds MAX_GROUP hues so none is ever cycled. */
-export const PALETTE = { light: ['#4f6d8a', '#b8683a', '#6b8254', '#9a5b6e'], dark: ['#8fa9bf', '#d9955f', '#a3b57f', '#c48d9b'] };
+export const PALETTE = { light: ['#8c1d33', '#b8683a', '#6b8254', '#7a6f60'], dark: ['#d0566a', '#d9955f', '#a3b57f', '#bfb4a3'] };
 
 const EVENT_NAME = /(phase|state|mode|stage|event|flag|status)/i;
 

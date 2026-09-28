@@ -1,6 +1,6 @@
 @layer views {
-#engines-view { --edge:#8b969f; --recess:#141414; --section:#3a3a3a; }
-[data-theme=light] #engines-view { --edge:#566571; --recess:#d4dade; --section:#414c55; }
+#engines-view { --edge:#978f90; --recess:#141414; --section:#3a3a3a; }
+[data-theme=light] #engines-view { --edge:#65585b; --recess:#ddd4d5; --section:#4f4245; }
 .engine-dashboard { position:relative; height:100%; }
 .diagram-stage { position:absolute; inset:0; overflow:hidden; }
 #engine-svg { position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none; cursor:grab; }
@@ -44,7 +44,7 @@
 .section-edge { fill:none; stroke:var(--section); stroke-width:2; }
 .liner { fill:#403d36; stroke:#aea08c; }
 .chamber-detail { fill:none; stroke:#d0bd9b; stroke-width:2; stroke-dasharray:2 9; }
-.duct-volume { fill:#73a7bd12; stroke:none; }
+.duct-volume { fill:#b0405512; stroke:none; }
 .core-volume { fill:var(--recess); opacity:.55; stroke:none; }
 .centerline { fill:none; stroke:var(--muted); stroke-width:.8; stroke-dasharray:18 5 3 5; opacity:.35; }
 .zone-label { fill:var(--muted); stroke:none; text-anchor:middle; font:11px var(--font-mono); letter-spacing:1.5px; pointer-events:none; }

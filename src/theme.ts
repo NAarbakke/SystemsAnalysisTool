@@ -14,7 +14,7 @@ function applyMode(value: string) {
   const mode = LIGHT.includes(value) ? 'light' : 'dark';
   root.dataset.theme = mode;
   document.querySelector('#theme-name')!.textContent = mode === 'light' ? 'Light' : 'Dark';
-  document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')!.content = mode === 'light' ? '#eef2f6' : '#000000';
+  document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')!.content = mode === 'light' ? '#f4efef' : '#000000';
 }
 
 let saved = 'dark';

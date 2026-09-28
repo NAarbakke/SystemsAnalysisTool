@@ -152,7 +152,7 @@ export async function createFlyover() {
         const geo = geographicAt(duration * i / count);
         routePositions.push(Cartesian3.fromRadians(geo.longitude, geo.latitude, geo.height));
       }
-      viewer.entities.add({ polyline: { positions: routePositions, width: 2, material: Color.fromCssColorString('#7fb2e5').withAlpha(0.85) } });
+      viewer.entities.add({ polyline: { positions: routePositions, width: 2, material: Color.fromCssColorString('#d0485a').withAlpha(0.85) } });
       for (const [index, name] of [[0, 'Start'], [samples.length - 1, 'Finish']] as const) {
         const sample = samples[index];
         viewer.entities.add({ position: Cartesian3.fromDegrees(sample.longitude, sample.latitude, sample.altitude),

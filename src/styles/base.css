@@ -43,7 +43,7 @@
 
   /* Engineering labels: small monospace capitals, the same everywhere. */
   .label, .panel label:not(.check, .file-drop), .eyebrow {
-    display: block; margin: 14px 0 6px; font: 500 var(--fs-xs)/1.4 var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted);
+    display: block; margin: 14px 0 6px; font: 500 var(--fs-xs)/1.4 var(--font-mono); letter-spacing: .06em; color: var(--muted);
   }
   .eyebrow { margin: 0; }
   .note { margin: 10px 0; color: var(--muted); font-size: var(--fs-xs); line-height: 1.6; overflow-wrap: anywhere; }
@@ -73,12 +73,13 @@
   /* Shell navigation: the bar itself is transparent; only the controls carry glass. */
   .view-menu { position: fixed; z-index: 30; inset: 12px 16px auto; height: var(--nav-h); display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 0 4px; pointer-events: none; }
   .view-menu > * { pointer-events: auto; }
-  .wordmark { display: flex; align-items: center; gap: 10px; font: 600 var(--fs-sm) var(--font-mono); letter-spacing: .14em; text-transform: uppercase; white-space: nowrap; text-shadow: 0 1px 10px var(--page); }
+  .wordmark { display: flex; align-items: center; gap: 10px; font: 600 var(--fs-lg) var(--font-mono); letter-spacing: .02em; white-space: nowrap; text-shadow: 0 1px 10px var(--page); }
+  [data-theme="light"] body:has(#flyover-view:not([hidden])) .wordmark { color: #fff; text-shadow: 0 1px 10px rgba(0,0,0,.6); }
   .mode-switch { display: flex; gap: 2px; padding: 4px; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--glass); backdrop-filter: var(--blur); }
   .mode-switch button { min-height: 32px; padding: 6px 16px; border: 0; border-radius: var(--r-pill); background: transparent; color: var(--muted); }
   .mode-switch button:hover:not(:disabled) { background: var(--accent-soft); color: var(--ink); }
   .mode-switch button[aria-pressed='true'] { background: var(--accent); color: var(--on-accent); }
-  #theme-toggle { min-height: 40px; padding: 8px 14px; border-radius: var(--r-pill); background: var(--glass); backdrop-filter: var(--blur); color: var(--muted); font: var(--fs-xs) var(--font-mono); letter-spacing: .06em; text-transform: uppercase; }
+  #theme-toggle { min-height: 40px; padding: 8px 14px; border-radius: var(--r-pill); background: var(--glass); backdrop-filter: var(--blur); color: var(--muted); font: var(--fs-xs) var(--font-mono); letter-spacing: .06em; }
   #theme-toggle:hover { color: var(--ink); }
   #theme-toggle .sun { display: none; }
   [data-theme='light'] #theme-toggle .sun { display: block; }

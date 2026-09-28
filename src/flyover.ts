@@ -30,6 +30,10 @@ export async function createFlyover() {
   viewer.scene.postProcessStages.fxaa.enabled = true;
   viewer.scene.globe.enableLighting = false;
   viewer.scene.skyAtmosphere!.show = true;
+  viewer.scene.skyBox!.show = false;
+  viewer.scene.sun!.show = false;
+  viewer.scene.moon!.show = false;
+  viewer.scene.backgroundColor = Color.BLACK;
   const play = document.querySelector<HTMLButtonElement>('#flight-play')!;
   const seek = document.querySelector<HTMLInputElement>('#flight-time')!;
   const readout = document.querySelector<HTMLOutputElement>('#flight-time-value')!;

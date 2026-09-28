@@ -8,7 +8,7 @@
   .plot-toolbar .check:first-child { margin-top: 0; }
   .file-drop { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 14px; padding: 16px 12px; border: 1px dashed var(--accent); border-radius: var(--r-sm); background: var(--accent-soft); text-align: center; cursor: pointer; }
   .file-drop strong { font-size: var(--fs-sm); font-weight: 500; }
-  .file-drop small { font: var(--fs-xs) var(--font-mono); color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .file-drop small { font: var(--fs-xs) var(--font-mono); color: var(--muted); letter-spacing: .06em; }
   .file-drop input { margin-top: 8px; }
   .quantity-panel { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
   .quantity-panel .panel-title { margin: 0; }

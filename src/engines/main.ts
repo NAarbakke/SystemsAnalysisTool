@@ -46,8 +46,8 @@ function select(id?: string) {
     el.classList.toggle('selected', el.dataset.part === selected);
     el.setAttribute('aria-pressed', String(el.dataset.part === selected));
   });
-  $('selected-name').textContent = part?.name || 'Overview';
-  $('selected-role').textContent = part?.role || model.description || 'Select a component to explore this conceptual section.';
+  $('selected-name').textContent = part?.name || ''; $('selected-name').hidden = !part;
+  $('selected-role').textContent = part?.role || ''; $('selected-role').hidden = !part;
   $('selection-index').textContent = part ? String(model.parts.indexOf(part) + 1).padStart(2, '0') : '—';
   const readings = part ? part.readings : [];
   $('readings').hidden = readings.length === 0;

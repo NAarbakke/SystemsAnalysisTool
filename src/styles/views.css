@@ -25,7 +25,7 @@
   .readings dt { color: var(--muted); font-size: var(--fs-xs); }
   .readings dd { margin: 0; font: var(--fs-sm) var(--font-mono); font-variant-numeric: tabular-nums; }
   .properties { font-size: var(--fs-xs); margin: 4px 0 0; }
-  .properties dt { margin-top: 10px; font: var(--fs-xs) var(--font-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .properties dt { margin-top: 10px; font: var(--fs-xs) var(--font-mono); letter-spacing: .06em; color: var(--muted); }
   .properties dd { margin: 2px 0 0; overflow-wrap: anywhere; }
   .separation-dock { position: absolute; right: var(--gutter); bottom: 24px; width: 272px; }
   .separation-dock .label { margin: 0; }
@@ -47,7 +47,7 @@
   .cesium-credit-logoContainer { display: none !important; }
 
   /* Engines and Telemetry own their markup; the shell only sizes them. */
-  #engines-view, #telemetry-view { padding: var(--overlay-top) var(--gutter) var(--gutter); }
+  #telemetry-view { padding: var(--overlay-top) var(--gutter) var(--gutter); }
 
   @media (max-width: 1050px) and (min-width: 761px) {
     .assembly-source, #component-panel, .separation-dock { width: 230px; }

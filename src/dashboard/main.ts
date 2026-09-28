@@ -1,6 +1,6 @@
 import './style.css';
 import uPlot from 'uplot';
-import { defaultTime, demoTable, describeColumn, eventColumns, groupColumns, PALETTE, phaseEvents, plotSamples, seriesStats, timeValues, type Dataset } from './data.ts';
+import { defaultTime, demoTable, describeColumn, eventColumns, groupColumns, PALETTE, plotSamples, seriesStats, timeValues, type Dataset } from './data.ts';
 
 const get = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const grid = get<HTMLDivElement>('plot-grid');
@@ -143,24 +143,6 @@ function axis(colors: Colors, extra: uPlot.Axis = {}): uPlot.Axis {
   };
 }
 
-/** Phase changes are drawn as dotted rules in the warm colour, labelled on the overview. */
-function eventPlugin(events: { time: number; label: string }[], colors: Colors, labels: boolean): uPlot.Plugin {
-  return { hooks: { draw: [u => {
-    if (!events.length) return;
-    const { ctx, bbox } = u, ratio = devicePixelRatio;
-    ctx.save();
-    ctx.strokeStyle = colors.hot; ctx.globalAlpha = .7; ctx.lineWidth = ratio; ctx.setLineDash([2 * ratio, 4 * ratio]);
-    ctx.fillStyle = colors.hot; ctx.font = `${10 * ratio}px ${colors.mono}`; ctx.textBaseline = 'top';
-    for (const event of events) {
-      const left = Math.round(u.valToPos(event.time, 'x', true));
-      if (left < bbox.left || left > bbox.left + bbox.width) continue;
-      ctx.beginPath(); ctx.moveTo(left, bbox.top); ctx.lineTo(left, bbox.top + bbox.height); ctx.stroke();
-      if (labels) ctx.fillText(event.label, left + 3 * ratio, bbox.top + 2 * ratio);
-    }
-    ctx.restore();
-  }] } };
-}
-
 function fullRange(plot: uPlot): [number, number] {
   const x = plot.data[0];
   return [x[0], x[x.length - 1]];
@@ -217,8 +199,6 @@ function renderPlots() {
 
   const chosen = data.columns.filter(c => selected.has(c) && c !== timeColumn);
   const colors = theme();
-  const eventSource = eventColumns(data).filter(c => c !== timeColumn);
-  const events = eventSource.flatMap(c => phaseEvents(data, timeColumn, c));
 
   // Grouping is computed over every quantity, so a hue follows its column through any filter.
   const groups = groupColumns(data.columns.filter(c => c !== timeColumn))
@@ -255,7 +235,7 @@ function renderPlots() {
     table.classList.toggle('single', !multi);
     const header = document.createElement('div'); header.className = 'series-row series-labels';
     if (multi) cell(header, '');
-    cell(header, 'AT CURSOR');
+    cell(header, 'At cursor');
     table.append(header);
 
     let reduced = false;
@@ -299,7 +279,6 @@ function renderPlots() {
       axes: [axis(colors, { size: 32 }), axis(colors)],
       series: seriesOptions,
       cursor: { sync: { key: SYNC_KEY }, y: false, drag: { x: true, y: false }, points: { size: 7 } },
-      plugins: [eventPlugin(events, colors, false)],
       hooks: {
         setCursor: [u => updateCursor(u.cursor.idx == null ? null : u.data[0][u.cursor.idx])],
         setScale: [onChartScale],
@@ -310,7 +289,7 @@ function renderPlots() {
   }
 
   if (revision !== current) return;
-  renderOverview(x, chosen, groups, colors, events, eventSource);
+  renderOverview(x, chosen, groups, colors);
   renderStatus.textContent = '';
 }
 
@@ -320,7 +299,6 @@ function renderOverview(
   x: number[], chosen: string[],
   groups: { key: string; columns: string[]; drawn: string[] }[],
   colors: Colors,
-  events: { time: number; label: string }[], eventSource: string[],
 ) {
   if (overviewPlot) { unmount(overviewChart, overviewPlot); overviewPlot = undefined; }
   overviewStrip.hidden = !chosen.length;
@@ -339,7 +317,6 @@ function renderOverview(
   get('overview-note').textContent = [
     `Whole run over ${timeColumn}, each quantity scaled to its own range.`,
     'Drag to set the time range on every chart; double-click to reset.',
-    events.length ? `Dotted rules mark ${eventSource.join(' and ')} changes.` : '',
   ].filter(Boolean).join(' ');
 
   const shadeOutsideZoom: uPlot.Plugin = { hooks: { draw: [u => {
@@ -362,7 +339,7 @@ function renderOverview(
     axes: [axis(colors, { size: 24 }), { show: false }],
     series,
     cursor: { x: false, y: false, points: { show: false }, drag: { x: true, y: false, setScale: false } },
-    plugins: [eventPlugin(events, colors, true), shadeOutsideZoom],
+    plugins: [shadeOutsideZoom],
     hooks: { setSelect: [u => {
       if (u.select.width < 3) return;
       const range: [number, number] = [u.posToVal(u.select.left, 'x'), u.posToVal(u.select.left + u.select.width, 'x')];

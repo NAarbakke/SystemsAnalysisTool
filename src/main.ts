@@ -1,14 +1,11 @@
 import './theme.ts';
 import './styles/views.css';
-import {
-  Box3, DirectionalLight, NeutralToneMapping, HemisphereLight, PerspectiveCamera,
-  PMREMGenerator, Scene, Vector3, WebGLRenderer,
-} from 'three';
+import { Box3, PerspectiveCamera, Scene, Vector3, WebGLRenderer } from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { assemblyModels as models, type ModelDefinition } from '../models/index.ts';
 import type { Assembly } from './assembly.ts';
 import { createComponentExplorer } from './component-explorer.ts';
+import { createStage } from './stage.ts';
 import { setupViewMenu } from './view-menu.ts';
 
 const separation = document.querySelector<HTMLInputElement>('#separation')!;
@@ -34,31 +31,20 @@ function showError(message: string) {
 }
 
 try {
-  const renderer = new WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+  const renderer = new WebGLRenderer({ alpha: true, powerPreference: 'high-performance' });
   // Frames are drawn only on interaction, so supersample: at least 2x, up to 3x on high-DPI screens.
   const supersample = () => renderer.setPixelRatio(Math.min(Math.max(window.devicePixelRatio, 1) * 2, 3));
   supersample();
-  renderer.toneMapping = NeutralToneMapping;
-  renderer.toneMappingExposure = 1;
   host.appendChild(renderer.domElement);
 
   const scene = new Scene();
   let model = definition.create();
   let imported: { definition: ModelDefinition; assembly: Assembly } | undefined;
-  scene.add(model.root, new HemisphereLight(0xffffff, 0x404040, .6));
-  const key = new DirectionalLight(0xffffff, 2.4);
-  key.position.set(3, 6, 5);
-  const rim = new DirectionalLight(0xdfe8ff, 1.2);
-  rim.position.set(-5, 2, -6);
-  scene.add(key, rim);
-  const room = new RoomEnvironment();
-  const pmrem = new PMREMGenerator(renderer);
-  const environment = pmrem.fromScene(room, .04);
-  scene.environment = environment.texture;
-  room.dispose();
-  pmrem.dispose();
+  scene.add(model.root);
 
   const camera = new PerspectiveCamera(32, 1, .1, 100);
+  const stage = createStage(renderer, scene, camera);
+  stage.setModel(model);
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = .1;
@@ -84,7 +70,8 @@ try {
     lastTime = time;
 
     const cameraChanged = controls.update();
-    renderer.render(scene, camera);
+    stage.render();
+    explorer.placeTag();
     if (cameraChanged) requestRender();
     else lastTime = 0;
   }
@@ -94,6 +81,8 @@ try {
     if (!width || !height) return;
     supersample();
     renderer.setSize(width, height);
+    stage.setSize(width, height);
+    stage.fit(model);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
     // Fit each built-in model to its current pose so exterior detail remains legible.
@@ -137,6 +126,7 @@ try {
     lastTime = 0;
     amount = Number(separation.value) / 100;
     model.setExplosion(amount);
+    stage.fit(model);
     if(['ss-27','burevestnik','spindle','industrial-motor','turbofan'].includes(definition.id)){
       viewingDirection.copy(camera.position).sub(controls.target).normalize();
       controls.target.copy(new Box3().setFromObject(model.root).getCenter(new Vector3()));
@@ -156,6 +146,7 @@ try {
     model.root.quaternion.identity();
     model.setExplosion(0);
     scene.add(model.root);
+    stage.setModel(model);
     amount = lastTime = 0;
 
     syncSeparation();
@@ -215,6 +206,7 @@ try {
     return response.arrayBuffer();
   }, 'Example fixture.glb'); });
 
+  new MutationObserver(requestRender).observe(document.documentElement, { attributeFilter: ['data-theme'] });
   controls.addEventListener('change', requestRender);
   controls.addEventListener('start', requestRender);
   const explorer = createComponentExplorer(renderer.domElement, camera, requestRender);
@@ -243,7 +235,7 @@ try {
     controls.dispose();
     model.dispose();
     if (imported && imported.assembly !== model) imported.assembly.dispose();
-    environment.dispose();
+    stage.dispose();
     renderer.dispose();
   });
 

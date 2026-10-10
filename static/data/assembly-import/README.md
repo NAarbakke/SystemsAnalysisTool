@@ -14,7 +14,7 @@ Use a **self-contained glTF 2.0 binary (.glb)** export with the model in its ass
 
 ## STEP and STL
 
-STEP (`.step`, `.stp`) is read in the browser by an embedded OpenCascade kernel, which tessellates the solids on open. The first STEP file of a session loads a 7 MB kernel, so it takes a few seconds; later files are faster. Each solid becomes its own selectable, separable part, keeping its name and colour where the export carries them. Assembly structure beyond that flat list of solids, and any CAD history, is not reconstructed.
+STEP (`.step`, `.stp`) is read in the browser by an embedded OpenCascade kernel, which tessellates the solids on open. The first STEP file of a session loads a 7 MB kernel, so it takes a few seconds; later files are faster. Each solid becomes its own selectable, separable part, keeping its name and colour where the export carries them. STEP has no surface finish, so the viewer picks one for display: the solid's name decides it where it contains a familiar word (bolt, bearing, shaft, housing, seal and similar), otherwise grey solids are shown as bare metal and coloured ones as paint. This is appearance only and is listed as the visual material; it is not a material specification. Assembly structure beyond that flat list of solids, and any CAD history, is not reconstructed.
 
 STL (`.stl`, binary or ASCII) carries one untextured shell with no names, colours or components, so it imports as a single part and the separation slider has nothing to spread. Use it for a quick look at one part rather than an assembly.
 

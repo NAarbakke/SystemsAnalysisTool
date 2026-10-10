@@ -1,6 +1,7 @@
 import { CylinderGeometry, type BufferGeometry } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { assemblyBuilder, around, bladeRow, box, finish, hoop, revolve, ring, tube, type Detail } from '../display-details.ts';
+import { assemblyBuilder, around, bladeRow, box, heatTint, hoop, revolve, ring, sectionCaps, tube, type Detail } from '../display-details.ts';
+import { finishes } from '../../src/finishes.ts';
 
 type Stage = { y: number; hub: number; tip: number; count: number; chord: number; rotor: boolean };
 
@@ -11,15 +12,23 @@ type Stage = { y: number; hub: number; tip: number; count: number; chord: number
  * counts and shapes are illustrative, not aerodynamic or performance data.
  */
 export function createTurbofan() {
-  const { add, done } = assemblyBuilder('Civilian turbofan cutaway', true);
+  const builder = assemblyBuilder('Civilian turbofan cutaway', true), { done } = builder;
   // Local Y is the engine axis (world X, +Y aft). Shells leave a quarter open toward the default view.
   const arc = Math.PI * 1.5, start = Math.PI * .25 - .42;
-  const cut = (profile: [number, number][], segments = 160) => revolve(profile, segments, arc, start);
-  const titanium = finish('#a3abb1', .95, .26, 'Titanium');
-  const composite = finish('#2c3136', .2, .45, 'Composite');
-  const nickel = finish('#8d8274', .9, .36, 'Nickel alloy');
-  const painted = finish('#d9dde0', .15, .36, 'Painted nacelle');
-  const steel = finish('#b8c0c5', 1, .24, 'Steel');
+  // Every cut shell also leaves its two section faces here; `add` hands them to the part being built.
+  let sections: Detail[] = [];
+  const cut = (profile: [number, number][], segments = 160) => { sections.push(sectionCaps(profile, arc, start)); return revolve(profile, segments, arc, start); };
+  const add: typeof builder.add = (name, geometry, material, offset, userData, details = []) => {
+    const faces = sections; sections = [];
+    return builder.add(name, geometry, material, offset, userData, [...details, ...faces]);
+  };
+  const titanium = finishes.titanium();
+  const composite = finishes.composite();
+  const nickel = finishes.nickel();
+  // The hot end carries heat tint as vertex colours, so it needs its own finishes.
+  const hotNickel = finishes.nickel({ vertexColors: true }), hotSteel = finishes.steel({ vertexColors: true });
+  const painted = finishes.paint({ name: 'Painted nacelle' });
+  const steel = finishes.steel();
   const info = (material: string, role: string) => ({ componentInfo: { material, role, source: 'Illustrative geometry; not design data' } });
   const detail = (geometry: BufferGeometry, color: string, metalness = .9, roughness = .3): Detail => ({ geometry, color, metalness, roughness });
   const rows = (list: Stage[], hot = false) => mergeGeometries(list.map(s => bladeRow({
@@ -65,7 +74,7 @@ export function createTurbofan() {
 
   // Core casing: follows the blade tips from the compressor to the turbine exit.
   const inside: [number,number][] = [[.53,-1.25],[.41,.04],[.6,.12],[.6,.82],[.58,.86],[.58,1.28],[.645,1.33],[.79,2]];
-  add('Core casing', cut([...inside, ...inside.map(([r,y]) => [r + .035, y] as [number,number]).reverse(), inside[0]]), steel, [-1.7,.3,0],
+  add('Core casing', heatTint(cut([...inside, ...inside.map(([r,y]) => [r + .035, y] as [number,number]).reverse(), inside[0]]), .7, 3.4), hotSteel, [-1.7,.3,0],
     info('Steel and nickel alloy casings', 'Pressure casing of the core; carries vane rows and bleed manifolds'), [
       ...[[.52,-.9],[.47,-.4]].map(([r,y]) => detail(hoop(r,y,.028,arc,start), '#7a8288')),
       ...[[.66,.95],[.71,1.6]].map(([r,y]) => detail(hoop(r,y,.03,arc,start), '#6f675c')),
@@ -95,9 +104,9 @@ export function createTurbofan() {
     info('Maraging steel', 'Inner shaft linking the low-pressure turbine to the fan'),
     [detail(ring(.1,.2,-1.3,-1.12,.01), '#d7dcdf', 1, .15), detail(ring(.1,.14,2.05,2.2,.01), '#d7dcdf', 1, .15)]);
 
-  add('Exhaust cone and nozzle', revolve([[.4,2.02],[.3,2.4],[.1,2.95],[0,3],[0,2.02],[.4,2.02]]), nickel, [0,2.7,0],
+  add('Exhaust cone and nozzle', heatTint(revolve([[.4,2.02],[.3,2.4],[.1,2.95],[0,3],[0,2.02],[.4,2.02]]), 1.9, 3.1), hotNickel, [0,2.7,0],
     info('Nickel alloy', 'Core exhaust plug and nozzle; rear-frame struts carry the aft bearing'), [
-      detail(cut([[.79,2],[.83,2],[.67,2.75],[.63,2.75],[.79,2]]), '#77706a'),
+      detail(heatTint(cut([[.79,2],[.83,2],[.67,2.75],[.63,2.75],[.79,2]]), 1.6, 3.2), '#a39a8e'),
       ...around(12, () => box(.36,.3,.018,.58,2.1,0)).map(g => detail(g, '#6e675d')),
     ]);
 

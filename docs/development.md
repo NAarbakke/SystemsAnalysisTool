@@ -32,6 +32,8 @@ Both development and production builds prepare Cesium's local assets. Deploy the
 | `models/<name>/model.ts` | Authored 3D assemblies. |
 | `models/engine-diagrams/` | Selectable SVG engine illustrations. |
 | `src/main.ts`, `src/assembly.ts` | Assembly viewer and shared model interface. |
+| `src/stage.ts` | Assembly staging: lighting, cast shadows, ambient occlusion and edge lines. |
+| `src/finishes.ts` | Named surface finishes for authored models, and the finish guessed for imported STEP and STL parts. |
 | `src/styles/` | Shared design tokens (`tokens.css`), controls and panels (`base.css`) and the shell layout (`views.css`). |
 | `src/engines/` | Engine diagram interaction and styling. |
 | `src/flyover.ts`, `src/basemap.ts` | Globe, flight replay and basemap source switching. |

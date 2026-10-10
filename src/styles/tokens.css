@@ -28,6 +28,8 @@
     --hot: #f59a4a; --hot-soft: #f59a4a1f;
     --danger: #ff8474; --ok: #5fcf8f;
     --glass: #0a0a0bd9; --field: #00000099; --shadow: #000a;
+    /* Backdrop behind the model: lit in the middle so dark parts keep a silhouette, black at the edges. */
+    --stage: radial-gradient(ellipse 75% 70% at 50% 48%, #2a2c31 0%, #131417 55%, #000000 100%);
   }
   :root[data-theme='light'] {
     color-scheme: light;
@@ -37,5 +39,6 @@
     --hot: #b8570f; --hot-soft: #b8570f17;
     --danger: #b3261e; --ok: #1d7a45;
     --glass: #ffffffd9; --field: #efe4e680; --shadow: #3b171f1f;
+    --stage: radial-gradient(ellipse 75% 70% at 50% 48%, #ffffff 0%, #f4efef 55%, #e2d9da 100%);
   }
 }

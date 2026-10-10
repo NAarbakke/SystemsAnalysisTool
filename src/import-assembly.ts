@@ -1,6 +1,7 @@
-import { Box3, BufferAttribute, BufferGeometry, Color, Group, LoadingManager, Matrix3, Mesh, MeshStandardMaterial, Texture, Vector3, type Material, type Object3D } from 'three';
+import { Box3, BufferAttribute, BufferGeometry, Group, LoadingManager, Matrix3, Mesh, Texture, Vector3, type Material, type Object3D } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import type { Assembly, AssemblyPart } from './assembly.ts';
+import { inferFinish } from './finishes.ts';
 
 export const MAX_IMPORT_BYTES = 100 * 1024 * 1024;
 const IMPORTABLE = /\.(glb|stl|stp|step)$/i;
@@ -108,11 +109,6 @@ export function assemblyFromScene(content: Group): Assembly {
   return { root, parts, bounds, setExplosion, dispose: () => disposeImported(root) };
 }
 
-/** STEP solids keep their own colours; STL carries a single untinted shell. */
-function meshMaterial(color?: number[]) {
-  return new MeshStandardMaterial({ color: color ? new Color(color[0], color[1], color[2]) : 0x93a0ac, metalness: .25, roughness: .55 });
-}
-
 /** STL and STEP arrive as tessellated geometry, without glTF's scene graph, materials or animations. */
 export async function loadTessellatedAssembly(data: ArrayBuffer, name: string) {
   if (data.byteLength > MAX_IMPORT_BYTES) throw new Error(`Use a file smaller than ${MAX_IMPORT_BYTES / 1024 / 1024} MB. Reduce export tessellation.`);
@@ -123,8 +119,9 @@ export async function loadTessellatedAssembly(data: ArrayBuffer, name: string) {
     try { geometry = new STLLoader().parse(data); }
     catch { throw new Error('This STL could not be read. Export it again as binary or ASCII STL.'); }
     if (!geometry.getAttribute('normal')) geometry.computeVertexNormals();
-    const mesh = new Mesh(geometry, meshMaterial());
+    const mesh = new Mesh(geometry);
     mesh.name = name.replace(/\.stl$/i, '') || 'Imported shell';
+    mesh.material = inferFinish(mesh.name);
     content.add(mesh);
   } else {
     // The CAD kernel is a 7 MB wasm module, so it loads only when a STEP file is opened.
@@ -140,7 +137,8 @@ export async function loadTessellatedAssembly(data: ArrayBuffer, name: string) {
       if (solid.attributes.normal?.array?.length) geometry.setAttribute('normal', new BufferAttribute(Float32Array.from(solid.attributes.normal.array), 3));
       if (solid.index?.array?.length) geometry.setIndex(new BufferAttribute(Uint32Array.from(solid.index.array), 1));
       if (!solid.attributes.normal?.array?.length) geometry.computeVertexNormals();
-      const mesh = new Mesh(geometry, meshMaterial(solid.color));
+      // STEP solids keep their own colours; the finish comes from the solid's name.
+      const mesh = new Mesh(geometry, inferFinish(solid.name || '', solid.color));
       mesh.name = solid.name || `Solid ${index + 1}`;
       content.add(mesh);
     }

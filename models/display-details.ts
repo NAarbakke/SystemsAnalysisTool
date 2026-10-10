@@ -1,20 +1,33 @@
-import { Box3, BoxGeometry, BufferGeometry, CatmullRomCurve3, CylinderGeometry, DoubleSide, Float32BufferAttribute, Group, LatheGeometry, TubeGeometry, Vector2, Vector3, Mesh, MeshStandardMaterial, SphereGeometry, TorusGeometry, type Material } from 'three';
+import { Box3, BoxGeometry, BufferGeometry, CatmullRomCurve3, Color, CylinderGeometry, DoubleSide, Float32BufferAttribute, Group, LatheGeometry, ShapeUtils, TubeGeometry, Vector2, Vector3, Mesh, MeshStandardMaterial, SphereGeometry, TorusGeometry, type Material } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import type { Assembly, AssemblyPart } from '../src/assembly.ts';
+import { finishes, SECTION_COLOR, type Finish } from '../src/finishes.ts';
 
-export type Detail = { geometry:BufferGeometry; color:string; metalness?:number; roughness?:number };
+/** `finish` takes a library finish in `color`; without it the detail is a plain metal of the given metalness and roughness. */
+export type Detail = { geometry:BufferGeometry; color:string; metalness?:number; roughness?:number; finish?:Finish };
 /** Merge decorative detail by finish, keeping one selectable mesh per component. */
 export function detailMesh(mesh:Mesh, details:Detail[]) {
  if(!details.length)return;
- const groups=new Map<string,{detail:Detail;list:BufferGeometry[]}>();
- for(const detail of details){const key=`${detail.color}|${detail.metalness??.65}|${detail.roughness??.28}`;if(!groups.has(key))groups.set(key,{detail,list:[]});groups.get(key)!.list.push(detail.geometry);}
- if(!mesh.geometry.getAttribute('uv'))mesh.geometry.setAttribute('uv',new Float32BufferAttribute(new Float32Array(mesh.geometry.getAttribute('position').count*2),2));
+ const groups=new Map<string,{detail:Detail;list:BufferGeometry[]}>(),library=new Map<Finish,number>();
+ for(const detail of details){
+  if(detail.finish&&!library.has(detail.finish))library.set(detail.finish,library.size);
+  const key=detail.finish?`${detail.color}|${library.get(detail.finish)}`:`${detail.color}|${detail.metalness??.65}|${detail.roughness??.28}`;
+  if(!groups.has(key))groups.set(key,{detail,list:[]});groups.get(key)!.list.push(detail.geometry);
+ }
+ // Merging needs matching attributes: blank UVs everywhere, and white where only some pieces are tinted.
+ const all=[mesh.geometry,...details.map(d=>d.geometry)],tinted=new Set(all.filter(g=>g.getAttribute('color')));
+ for(const g of all){
+  const count=g.getAttribute('position').count;
+  if(!g.getAttribute('uv'))g.setAttribute('uv',new Float32BufferAttribute(new Float32Array(count*2),2));
+  if(tinted.size&&!tinted.has(g))g.setAttribute('color',new Float32BufferAttribute(new Float32Array(count*3).fill(1),3));
+ }
  const geometries=[mesh.geometry.index?mesh.geometry.toNonIndexed():mesh.geometry];
  const materials:Material[] = [mesh.material as Material];
  for(const {detail,list} of groups.values()){
   const flat=list.map(g=>g.index?g.toNonIndexed():g),combined=mergeGeometries(flat)!;
   new Set([...list,...flat]).forEach(g=>g.dispose());geometries.push(combined);
-  materials.push(finish(detail.color,detail.metalness??.65,detail.roughness??.28,'Detail finish '+detail.color));
+  const material=detail.finish?detail.finish({color:detail.color}):finish(detail.color,detail.metalness??.65,detail.roughness??.28,'Detail finish '+detail.color);
+  material.vertexColors=list.some(g=>tinted.has(g));materials.push(material);
  }
  const merged=mergeGeometries(geometries,true)!;
  new Set([mesh.geometry,...geometries]).forEach(g=>g.dispose());mesh.geometry=merged;mesh.material=materials;
@@ -82,6 +95,34 @@ function orient(g:BufferGeometry){
   a.fromBufferAttribute(p,i);b.fromBufferAttribute(p,j).sub(a);c.fromBufferAttribute(p,k).sub(a);b.cross(c);
   if(b.lengthSq()>0&&b.dot(a.fromBufferAttribute(n,i))<0){index.setX(t+1,k);index.setX(t+2,j);}
  }
+}
+/** Flat faces closing a cutaway shell on its two cut planes, in the shared section colour. `profile` is the closed loop given to `revolve`. */
+export function sectionCaps(profile:[number,number][],arc:number,start=0):Detail{
+ const pts=profile.filter((p,i)=>i===0||Math.hypot(p[0]-profile[i-1][0],p[1]-profile[i-1][1])>1e-9).map(([r,y])=>new Vector2(r,y));
+ if(pts.length>1&&pts[0].distanceTo(pts[pts.length-1])<1e-9)pts.pop();
+ const faces=ShapeUtils.triangulateShape(pts,[]),positions:number[]=[],normals:number[]=[],indices:number[]=[];
+ for(const [phi,side] of [[start,-1],[start+arc,1]]){
+  const s=Math.sin(phi),c=Math.cos(phi),base=positions.length/3;
+  for(const p of pts){positions.push(p.x*s,p.y,p.x*c);normals.push(side*c,0,-side*s);}
+  for(const f of faces)indices.push(base+f[0],base+f[1],base+f[2]);
+ }
+ const g=new BufferGeometry();
+ g.setAttribute('position',new Float32BufferAttribute(positions,3));g.setAttribute('normal',new Float32BufferAttribute(normals,3));g.setAttribute('uv',new Float32BufferAttribute(new Float32Array(positions.length/3*2),2));g.setIndex(indices);
+ orient(g);return {geometry:g,color:SECTION_COLOR,finish:finishes.section};
+}
+const OXIDE:[number,Color][]=[[0,'#ffffff'],[.3,'#f3cf86'],[.55,'#d08a8f'],[.78,'#8a74d6'],[1,'#5aa0f2']].map(([t,c])=>[t as number,new Color(c as string)]);
+/**
+ * Heat tint as vertex colours along Y: bare metal at `cool`, then the oxide colours a hot section
+ * takes on (straw, rose, violet, blue) toward `hot`. They multiply the finish, which needs
+ * `vertexColors` set; details pick that up on their own.
+ */
+export function heatTint<G extends BufferGeometry>(geometry:G,cool:number,hot:number){
+ const p=geometry.getAttribute('position'),colors=new Float32Array(p.count*3),c=new Color();
+ for(let i=0;i<p.count;i++){
+  const t=Math.min(1,Math.max(0,(p.getY(i)-cool)/(hot-cool))),k=Math.max(1,OXIDE.findIndex(([at])=>at>=t)),[t0,a]=OXIDE[k-1],[t1,b]=OXIDE[k];
+  c.copy(a).lerp(b,(t-t0)/(t1-t0)).toArray(colors,i*3);
+ }
+ geometry.setAttribute('color',new Float32BufferAttribute(colors,3));return geometry;
 }
 /** Round hoop (a torus about Y) that can follow a cutaway arc. */
 export function hoop(radius:number,y:number,thickness:number,arc=Math.PI*2,start=0){

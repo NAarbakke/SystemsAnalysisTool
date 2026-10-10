@@ -1,4 +1,4 @@
-import { Color, Raycaster, Vector2, type Camera, type Material, type Mesh, type Object3D } from 'three';
+import { Color, Raycaster, Vector2, Vector3, type Camera, type Material, type Mesh, type Object3D } from 'three';
 import type { Assembly } from './assembly.ts';
 import { readComponentInfo, readComponentStages, type ComponentStage } from './component-data.ts';
 
@@ -31,6 +31,11 @@ export function createComponentExplorer(canvas: HTMLCanvasElement, camera: Camer
   }
   stageSelect.addEventListener('change', showReadings);
   const raycaster = new Raycaster();
+  // A tag in the scene names the selection; it hangs on a point of the part, in the part's own frame.
+  const tag = document.createElement('div');
+  tag.className = 'part-tag'; tag.hidden = true; tag.setAttribute('aria-hidden', 'true');
+  canvas.parentElement!.append(tag);
+  const anchor = new Vector3(), projected = new Vector3();
   let model: Assembly, selected: Mesh | undefined, original: Material | Material[] | undefined;
   let highlights: Material[] = [];
   let down: { x:number; y:number; id:number } | undefined;
@@ -38,21 +43,38 @@ export function createComponentExplorer(canvas: HTMLCanvasElement, camera: Camer
   function clear() {
     if (selected && original) selected.material = original;
     highlights.forEach(material => material.dispose()); highlights = [];
-    selected = undefined; original = undefined; markSelected();
+    selected = undefined; original = undefined; tag.hidden = true; markSelected();
     name.textContent = 'Select a component'; properties.replaceChildren();
     operation.hidden = true; readings.replaceChildren(); stages = [];
     materialLabel.textContent = ''; cadProperties.hidden = true;
     render();
   }
-  function select(mesh?: Mesh) {
+  function placeTag() {
+    if (!selected) return;
+    projected.copy(anchor).applyMatrix4(selected.matrixWorld).project(camera);
+    tag.hidden = projected.z > 1;
+    tag.style.transform = `translate(${(projected.x + 1) / 2 * canvas.clientWidth}px, ${(1 - projected.y) / 2 * canvas.clientHeight}px)`;
+  }
+  /** `point` is where the part was clicked, in world space; from the list, the tag finds the part along the line of sight. */
+  function select(mesh?: Mesh, point?: Vector3) {
     if (mesh === selected) { clear(); return; }
     clear(); if (!mesh) return;
+    model.root.updateMatrixWorld(true); camera.updateMatrixWorld(true);
+    mesh.geometry.computeBoundingBox();
+    const centre = mesh.geometry.boundingBox!.getCenter(new Vector3()).applyMatrix4(mesh.matrixWorld);
+    if (!point) {
+      const eye = new Vector3().setFromMatrixPosition(camera.matrixWorld);
+      raycaster.set(eye, centre.clone().sub(eye).normalize());
+      point = raycaster.intersectObject(mesh, false)[0]?.point ?? centre;
+    }
+    anchor.copy(mesh.worldToLocal(point.clone()));
+    tag.textContent = `${String(model.parts.findIndex(p => p.mesh === mesh) + 1).padStart(2, '0')}  ${mesh.name || 'Unnamed component'}`;
     selected = mesh; original = mesh.material;
     highlights = (Array.isArray(original) ? original : [original]).map(material => {
       const copy = material.clone();
       const surface = copy as Material & { emissive?: Color; emissiveIntensity?: number; color?: Color };
-      if (surface.emissive) { surface.emissive.set('#f5883a'); surface.emissiveIntensity = .55; }
-      else surface.color?.lerp(new Color('#ffab6b'), .5);
+      if (surface.emissive) { surface.emissive.set('#d0485a'); surface.emissiveIntensity = .5; }
+      else surface.color?.lerp(new Color('#e2788a'), .5);
       return copy;
     });
     mesh.material = Array.isArray(original) ? highlights : highlights[0];
@@ -117,12 +139,13 @@ export function createComponentExplorer(canvas: HTMLCanvasElement, camera: Camer
     if (event.clientX<rect.left || event.clientX>rect.right || event.clientY<rect.top || event.clientY>rect.bottom) return;
     model.root.updateMatrixWorld(true); camera.updateMatrixWorld(true);
     raycaster.setFromCamera(new Vector2((event.clientX-rect.left)/rect.width*2-1, -(event.clientY-rect.top)/rect.height*2+1), camera);
-    select(raycaster.intersectObjects(model.parts.map(p=>p.mesh), false)[0]?.object as Mesh | undefined);
+    const hit = raycaster.intersectObjects(model.parts.map(p=>p.mesh), false)[0];
+    select(hit?.object as Mesh | undefined, hit?.point);
   };
   const cancel = () => { down = undefined; };
   canvas.addEventListener('pointerdown', start); canvas.addEventListener('pointermove', move);
   canvas.addEventListener('pointerup', end); canvas.addEventListener('pointercancel', cancel);
-  return { clear, setModel(next: Assembly) { clear(); activeStage = ''; model = next; search.value = ''; refreshList();
+  return { clear, placeTag, setModel(next: Assembly) { clear(); activeStage = ''; model = next; search.value = ''; refreshList();
       document.querySelector('#component-count')!.textContent = `${next.parts.length} parts`; },
-    dispose() { clear(); canvas.removeEventListener('pointerdown',start); canvas.removeEventListener('pointermove',move); canvas.removeEventListener('pointerup',end); canvas.removeEventListener('pointercancel',cancel); } };
+    dispose() { clear(); tag.remove(); canvas.removeEventListener('pointerdown',start); canvas.removeEventListener('pointermove',move); canvas.removeEventListener('pointerup',end); canvas.removeEventListener('pointercancel',cancel); } };
 }

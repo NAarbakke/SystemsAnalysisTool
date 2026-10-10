@@ -1,5 +1,6 @@
 import { CylinderGeometry, TorusGeometry } from 'three';
-import { assemblyBuilder, bearing, box, finish, revolve, ring, around, type Detail } from '../display-details.ts';
+import { assemblyBuilder, bearing, box, revolve, ring, around, type Detail } from '../display-details.ts';
+import { finishes } from '../../src/finishes.ts';
 
 /**
  * Belt-driven milling spindle cartridge, nose down. The build follows a common layout:
@@ -8,12 +9,12 @@ import { assemblyBuilder, bearing, box, finish, revolve, ring, around, type Deta
  */
 export function createSpindle() {
   const { add, done } = assemblyBuilder('Precision spindle');
-  const housing = finish('#3b4a55', .35, .42, 'Anodised housing');
-  const ground = finish('#c9d0d5', 1, .2, 'Ground steel');
-  const bearingSteel = finish('#d7dcdf', 1, .14, 'Bearing steel');
-  const oxide = finish('#26292c', .7, .38, 'Black oxide');
-  const alloy = finish('#aab3b9', .9, .32, 'Machined aluminium');
-  const spring = finish('#6d767c', .9, .3, 'Spring steel');
+  const housing = finishes.anodised({ name: 'Anodised housing' });
+  const ground = finishes.groundSteel();
+  const bearingSteel = finishes.bearingSteel();
+  const oxide = finishes.blackOxide();
+  const alloy = finishes.machinedAluminium();
+  const spring = finishes.springSteel();
   const info = (material: string, role: string) => ({ componentInfo: { material, role, source: 'Illustrative layout; not a specific product' } });
   const dark = '#1d2023';
 

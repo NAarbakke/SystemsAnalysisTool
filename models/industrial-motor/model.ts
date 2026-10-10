@@ -1,5 +1,6 @@
 import { CylinderGeometry, TorusGeometry } from 'three';
-import { assemblyBuilder, around, bearing, box, finish, revolve, ring, tube, type Detail } from '../display-details.ts';
+import { assemblyBuilder, around, bearing, box, revolve, ring, tube, type Detail } from '../display-details.ts';
+import { finishes } from '../../src/finishes.ts';
 import type { ComponentReading } from '../../src/component-data.ts';
 
 /**
@@ -9,13 +10,16 @@ import type { ComponentReading } from '../../src/component-data.ts';
  */
 export function createIndustrialMotor() {
   const { add, done } = assemblyBuilder('Industrial electric motor', true);
-  const paint = finish('#35505f', .25, .48, 'Painted cast iron');
-  const lamination = finish('#5d666b', .85, .38, 'Electrical steel');
-  const copper = finish('#b8713a', 1, .32, 'Varnished copper');
-  const cast = finish('#b4bcc1', .9, .36, 'Die-cast aluminium');
-  const ground = finish('#c8cfd3', 1, .2, 'Ground steel');
-  const bearingSteel = finish('#d7dcdf', 1, .14, 'Bearing steel');
-  const polymer = finish('#2a2d30', 0, .62, 'Glass-filled polymer');
+  const paint = finishes.castPaint({ name: 'Painted cast iron' });
+  const cowl = finishes.paint({ name: 'Painted steel', color: '#23282c' });
+  const lamination = finishes.electricalSteel();
+  const copper = finishes.copper({ name: 'Varnished copper' });
+  const ground = finishes.groundSteel();
+  const bearingSteel = finishes.bearingSteel();
+  const polymer = finishes.polymer({ name: 'Glass-filled polymer' });
+  // Detail in the frame's paint, in the cowl's darker paint, and plated fasteners.
+  const painted = { color: '#35505f', finish: finishes.castPaint }, lid = { color: '#3a5563', finish: finishes.castPaint };
+  const dark = { color: '#23282c', finish: finishes.paint }, plated = { color: '#c3c9cc', finish: finishes.zinc };
   const reading = (label: string, value: number, unit: string): ComponentReading => ({ label, value, unit });
   const data = (material: string, role: string, readings: ComponentReading[], partNumber?: string) => ({
     componentInfo: { material, role, partNumber, source: 'Illustrative assignments' },
@@ -29,14 +33,14 @@ export function createIndustrialMotor() {
   for (let i = 0; i < 36; i++) {
     const a = i / 36 * Math.PI * 2; // measured from local +X (feet)
     if (skip(a, 0, .55) || skip(a, Math.PI, .32)) continue;
-    fins.push({ geometry: box(.17,2.06,.03,1.04,0,0).rotateY(-a), color: '#35505f', metalness: .25, roughness: .48 });
+    fins.push({ geometry: box(.17,2.06,.03,1.04,0,0).rotateY(-a), ...painted });
   }
   for (const y of [-.72,.72]) {
-    fins.push({ geometry: box(.1,.5,1.9,1.28,y,0), color: '#3a5563', metalness: .25, roughness: .5 });
-    for (const z of [-.72,.72]) fins.push({ geometry: box(.34,.42,.12,1.1,y,z), color: '#35505f', metalness: .25, roughness: .48 });
-    for (const z of [-.8,.8]) fins.push({ geometry: new CylinderGeometry(.05,.05,.02,20).rotateZ(Math.PI/2).translate(1.34,y,z), color: '#1c2226' });
+    fins.push({ geometry: box(.1,.5,1.9,1.28,y,0), ...lid });
+    for (const z of [-.72,.72]) fins.push({ geometry: box(.34,.42,.12,1.1,y,z), ...painted });
+    for (const z of [-.8,.8]) fins.push({ geometry: new CylinderGeometry(.05,.05,.02,20).rotateZ(Math.PI/2).translate(1.34,y,z), ...plated });
   }
-  fins.push({ geometry: new TorusGeometry(.12,.035,12,48).translate(-1.12,.8,0), color: '#35505f', metalness: .25, roughness: .48 });
+  fins.push({ geometry: new TorusGeometry(.12,.035,12,48).translate(-1.12,.8,0), ...plated });
   add('Frame', revolve([[.86,-1.15],[.97,-1.15],[1,-1.12],[1,1.12],[.97,1.15],[.86,1.15],[.86,-1.15]]), paint, [-2.3,0,0],
     data('Cast iron, painted', 'Stationary enclosure; conducts heat to the external fins', [reading('Surface temperature',52,'°C'),reading('Vibration RMS',1.1,'mm/s')], 'FR-100L'), fins);
 
@@ -85,8 +89,8 @@ export function createIndustrialMotor() {
   const shield = (s: number, extra: Detail[]) => ({
     geometry: revolve([[.36,1.42],[.46,1.42],[.5,1.36],[.95,1.3],[1,1.27],[1,1.15],[.86,1.15],[.86,1.08],[.8,1.08],[.8,1.2],[.46,1.22],[.42,1.14],[.36,1.14],[.36,1.42]].map(([r,y]) => [r,y*s] as [number,number])),
     details: [
-      ...around(8, () => box(.42,.1,.04,.72,1.35*s,0), .5).map(geometry => ({ geometry, color: '#35505f', metalness: .25, roughness: .48 })),
-      ...around(4, () => new CylinderGeometry(.04,.04,.06,6).translate(.93,1.3*s,0), .5).map(geometry => ({ geometry, color: '#1c2226' })),
+      ...around(8, () => box(.42,.1,.04,.72,1.35*s,0), .5).map(geometry => ({ geometry, ...painted })),
+      ...around(4, () => new CylinderGeometry(.04,.04,.06,6).translate(.93,1.3*s,0), .5).map(geometry => ({ geometry, ...plated })),
       ...extra,
     ] as Detail[],
   });
@@ -99,15 +103,15 @@ export function createIndustrialMotor() {
     { geometry: ring(.2,.82,1.6,1.625,.006), color: '#2a2d30', metalness: 0, roughness: .62 },
     ...around(10, () => box(.62,.16,.028,.51,1.705,0)).map(geometry => ({ geometry, color: '#2a2d30', metalness: 0, roughness: .62 })),
   ]);
-  const grille: Detail[] = [.25,.37,.49,.61,.73,.85,.97].map(r => ({ geometry: new TorusGeometry(r,.014,8,160).rotateX(Math.PI/2).translate(0,1.97,0), color: '#35505f', metalness: .25, roughness: .48 }));
-  grille.push(...around(8, () => box(.84,.025,.04,.55,1.97,0)).map(geometry => ({ geometry, color: '#35505f', metalness: .25, roughness: .48 })));
-  grille.push({ geometry: new CylinderGeometry(.14,.14,.03,48).translate(0,1.97,0), color: '#35505f', metalness: .25, roughness: .48 });
-  add('Fan cowl', revolve([[1.02,1.2],[1.04,1.2],[1.04,1.95],[1,1.99],[.98,1.97],[1.02,1.93],[1.02,1.2]]), paint, [0,2.3,0],
+  const grille: Detail[] = [.25,.37,.49,.61,.73,.85,.97].map(r => ({ geometry: new TorusGeometry(r,.014,8,160).rotateX(Math.PI/2).translate(0,1.97,0), ...dark }));
+  grille.push(...around(8, () => box(.84,.025,.04,.55,1.97,0)).map(geometry => ({ geometry, ...dark })));
+  grille.push({ geometry: new CylinderGeometry(.14,.14,.03,48).translate(0,1.97,0), ...dark });
+  add('Fan cowl', revolve([[1.02,1.2],[1.04,1.2],[1.04,1.95],[1,1.99],[.98,1.97],[1.02,1.93],[1.02,1.2]]), cowl, [0,2.3,0],
     data('Pressed steel, painted', 'Guides fan air along the frame fins; finger-safe grille', [reading('Inlet air temperature',25,'°C')]), grille);
 
   add('Terminal box', box(.42,.62,.6,-1.2,0,0), paint, [-3.3,0,0], data('Cast aluminium, painted', 'Houses the supply terminal block and cable entry', [reading('Supply voltage',400,'V'),reading('Enclosure temperature',38,'°C')]), [
-    { geometry: box(.05,.68,.66,-1.43,0,0), color: '#3a5563', metalness: .25, roughness: .5 },
-    ...[-.26,.26].flatMap(y => [-.27,.27].map(z => ({ geometry: new CylinderGeometry(.03,.03,.02,6).rotateZ(Math.PI/2).translate(-1.46,y,z), color: '#1c2226' }))),
+    { geometry: box(.05,.68,.66,-1.43,0,0), ...lid },
+    ...[-.26,.26].flatMap(y => [-.27,.27].map(z => ({ geometry: new CylinderGeometry(.03,.03,.02,6).rotateZ(Math.PI/2).translate(-1.46,y,z), ...plated }))),
     { geometry: new CylinderGeometry(.07,.08,.14,24).rotateX(Math.PI/2).translate(-1.2,0,.36), color: '#23272a', metalness: .2, roughness: .6 },
   ]);
   return done();

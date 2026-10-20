@@ -1,0 +1,45 @@
+<div id="globe"></div>
+<aside class="panel flyover-panel">
+  <label for="flyover-model">Vehicle</label><select id="flyover-model"></select>
+  <label class="check"><input id="show-notams" type="checkbox" checked disabled> Show NOTAM areas</label>
+  <div class="actions"><button id="flight-overview" type="button" disabled>Whole route</button><button id="flight-follow" type="button" aria-pressed="false" disabled>Follow vehicle</button></div>
+  <p id="flight-position" class="readout"></p>
+  <details><summary>Demo NOTAM areas</summary><p id="notam-status" class="note">Loading local areas…</p><div id="notam-list"></div></details>
+  <details><summary>Map source</summary>
+    <label for="map-source">Source</label>
+    <select id="map-source" disabled><option>Loading sources…</option></select>
+    <p id="source-network" class="note"></p>
+    <p id="map-status" class="note" role="status"></p>
+    <button id="map-retry" hidden type="button">Retry source</button>
+    <label for="map-quality">Display quality</label>
+    <select id="map-quality"><option value="high">High</option><option value="native">Native</option><option value="balanced">Balanced</option></select>
+  </details>
+  <details><summary>Saved views</summary>
+    <form id="save-map-view" class="actions"><label class="sr-only" for="map-view-name">Name</label><input id="map-view-name" maxlength="48" required placeholder="View name"><button type="submit">Save view</button></form>
+    <div id="saved-view-list"></div><p id="saved-view-status" class="note" role="status"></p>
+  </details>
+  <details id="state-readout" hidden><summary>State vector readout</summary><p id="flight-state" class="readout"></p></details>
+  <details><summary>Load a flight</summary>
+    <label for="flight-dof">Input type</label><select id="flight-dof"><option value="trajectory">Position series</option><option value="3">3DOF — position + velocity</option><option value="6">6DOF — position + velocity + attitude + rates</option></select>
+    <div id="state-options" hidden>
+      <label for="state-position">Position coordinates</label><select id="state-position"><option value="geodetic">Latitude / longitude / altitude</option><option value="ecef">ECEF X / Y / Z (metres)</option></select>
+      <label for="state-velocity">Velocity coordinates (m/s)</label><select id="state-velocity"><option value="enu">East / North / Up</option><option value="ned">North / East / Down</option><option value="ecef">ECEF X / Y / Z</option><option value="body">Body X / Y / Z (6DOF only)</option></select>
+      <div id="attitude-options" hidden>
+        <label for="state-attitude">Attitude format</label><select id="state-attitude"><option value="euler">Euler roll / pitch / yaw (ZYX)</option><option value="quaternion">Quaternion x / y / z / w</option></select>
+        <label for="state-frame">Attitude reference frame</label><select id="state-frame"><option value="enu">Local East / North / Up</option><option value="ned">Local North / East / Down</option><option value="ecef">Earth-fixed (ECEF)</option></select>
+        <label for="state-body">Body axes</label><select id="state-body"><option value="flu">Forward / Left / Up</option><option value="frd">Forward / Right / Down</option></select>
+        <label for="state-units">Euler angles / body rates</label><select id="state-units"><option value="degrees">Degrees / degrees per second</option><option value="radians">Radians / radians per second</option></select>
+      </div>
+    </div>
+    <p id="flight-format-help" class="note">s · degrees · metres (WGS84)</p>
+    <code id="flight-header">time,latitude,longitude,altitude</code>
+    <label for="flight-csv">Flight CSV</label><textarea id="flight-csv" rows="6" spellcheck="false"></textarea>
+    <label for="flight-file">Open CSV file</label><input id="flight-file" type="file" accept=".csv,text/csv">
+    <div class="actions"><button id="flight-load" class="primary" type="button" disabled>Load flight</button><button id="flight-example" type="button" disabled>Example</button></div>
+  </details>
+  <p id="flight-message" class="note" role="status"></p>
+</aside>
+<div class="panel flight-controls">
+  <div class="actions"><button id="flight-play" class="primary" type="button" disabled>Play</button><button id="flight-restart" type="button" disabled>Restart</button></div>
+  <div><label class="label" for="flight-time">Flight replay <output id="flight-time-value">0.0 / 60.0 s</output></label><input id="flight-time" type="range" min="0" max="60" step="any" value="0" disabled></div>
+</div>

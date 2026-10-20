@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Cartesian3, Matrix3, Quaternion } from 'cesium';
-import { defaultStateOptions, parseStateVector, stateHeader, exampleState, interpolateState } from '../src/state-vector.ts';
-import { createFlightPath } from '../src/flight-path.ts';
+import { defaultStateOptions, parseStateVector, stateHeader, exampleState, interpolateState } from '../src/views/flyover/flight/state-vector.ts';
+import { createFlightPath } from '../src/views/flyover/flight/path.ts';
 
 const near = (actual, expected) => actual.forEach((value, i) => assert.ok(Math.abs(value - expected[i]) < 1e-7, `${actual} != ${expected}`));
 const rotate = (q, vector) => {

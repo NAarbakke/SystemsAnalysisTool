@@ -10,6 +10,7 @@
     "moduleResolution": "Bundler",
     "allowImportingTsExtensions": true,
     "strict": true,
+    "noUnusedLocals": true,
     "skipLibCheck": true,
     "noEmit": true,
     "types": [

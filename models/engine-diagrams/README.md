@@ -14,7 +14,7 @@ Components buttons, to select it; the buttons also support keyboard selection.
   `data-part`, and all styling is scoped under `#<id>-tp` so drawings cannot
   collide with each other or with the page.
 - **Composed drawings** (`solid-rocket`, `liquid-rocket`) build their markup from
-  part geometry through `shared.js` and `views.js`, styled by `src/engines/style.css`.
+  part geometry through `shared.js` and `views.js`, styled by `src/views/engines/style.css`.
 
 The turbojet and turbofan drawings pair a full mirrored section with a chart
 tracing pressure and temperature along the same axial stations. Both traces are
@@ -25,6 +25,7 @@ The rocket drawings remain conceptual, with feed equipment omitted.
 
 ## Source
 
-- `src/engines/main.js`: catalogue, selection, pan and zoom.
-- `src/engines/style.css`: layout, and the styling for composed drawings.
+- `index.js`: the Model menu. Add an engine here to list it.
+- `src/views/engines/main.ts`: selection, pan and zoom.
+- `src/views/engines/style.css`: layout, and the styling for composed drawings.
 - `<id>/model.js`: one entry in the Model menu, with its component list.

@@ -1,0 +1,17 @@
+@layer views {
+  /* Every view fills the window; its panels float over the scene below the navigation. */
+  .view-menu ~ main { position: fixed; inset: 0; overflow: hidden; }
+  .view-status { position: absolute; top: var(--overlay-top); left: var(--gutter); }
+  output { font-variant-numeric: tabular-nums; color: var(--ink); }
+  label > output { float: right; text-transform: none; letter-spacing: 0; }
+
+  /* Numbered component lists, shared by Assembly and Engines. */
+  .part-list button, #component-buttons button {
+    display: grid; grid-template-columns: 26px minmax(0, 1fr); justify-content: stretch; align-items: baseline; gap: 6px;
+    min-height: 0; padding: 6px 8px; border-color: transparent; background: transparent; text-align: left; font-weight: 400; overflow-wrap: anywhere;
+  }
+  .part-list button span:first-child, #component-buttons button span:first-child { font: var(--fs-xs) var(--font-mono); color: var(--muted); }
+  .part-list button[aria-pressed='true'] span:first-child, #component-buttons button[aria-pressed='true'] span:first-child { color: var(--accent); }
+
+  noscript { position: absolute; top: 50%; left: 30px; }
+}

@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { BoxGeometry, Mesh, Vector3 } from 'three';
-import { inferFinish, finishes } from '../src/finishes.ts';
-import { detailMesh, heatTint, revolve, sectionCaps } from '../models/display-details.ts';
+import { inferFinish, finishes } from '../src/three/finishes.ts';
+import { detailMesh, heatTint, revolve, sectionCaps } from '../models/assemblies/display-details.ts';
 
 test('imported parts take a finish from their name, and from their colour when the name says nothing', () => {
   assert.equal(inferFinish('M8_bolt_12').name, 'Zinc plated');

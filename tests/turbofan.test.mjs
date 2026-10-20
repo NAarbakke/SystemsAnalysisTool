@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Box3 } from 'three';
-import { createTurbofan } from '../models/turbofan/model.ts';
+import { createTurbofan } from '../models/assemblies/turbofan/model.ts';
 test('display turbofan has fourteen selectable modules, finite geometry and reversible separation',()=>{
   const model = createTurbofan();
   assert.equal(model.parts.length,14);

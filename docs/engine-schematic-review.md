@@ -92,8 +92,8 @@ Keep SVG for this first pass: it already supports selectable, scalable parts. A 
 - `models/engine-diagrams/turbofan/model.js`: civilian turbofan layout.
 - `models/engine-diagrams/shared.js`: component groups, callouts and repeated shapes.
 - `models/engine-diagrams/views.js`: SVG composition order.
-- `src/engines/style.css`: material, line, selection and layout styling.
-- `src/engines/main.js`: selection, fit, pan and zoom.
+- `src/views/engines/style.css`: material, line, selection and layout styling.
+- `src/views/engines/main.ts`: selection, fit, pan and zoom.
 
 [Back to the user guide](../README.md)
 

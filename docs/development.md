@@ -28,20 +28,23 @@ Both development and production builds prepare Cesium's local assets. Deploy the
 
 | Location | Purpose |
 | --- | --- |
-| `models/index.ts` | 3D model catalogue and starting camera views. |
-| `models/<name>/model.ts` | Authored 3D assemblies. |
-| `models/engine-diagrams/` | Selectable SVG engine illustrations. |
-| `src/main.ts`, `src/assembly.ts` | Assembly viewer and shared model interface. |
-| `src/stage.ts` | Assembly staging: lighting, cast shadows, ambient occlusion and edge lines. |
-| `src/finishes.ts` | Named surface finishes for authored models, and the finish guessed for imported STEP and STL parts. |
-| `src/styles/` | Shared design tokens (`tokens.css`), controls and panels (`base.css`) and the shell layout (`views.css`). |
-| `src/engines/` | Engine diagram interaction and styling. |
-| `src/flyover.ts`, `src/basemap.ts` | Globe, flight replay and basemap source switching. |
-| `src/dashboard/` | Telemetry. |
+| `src/main.ts` | Entry point: loads the theme and starts the shell. |
+| `src/app/views.ts` | The view registry: one entry per navigation tab, loaded on first visit. |
+| `src/app/shell.ts`, `src/app/theme.ts` | Navigation, view switching and the colour mode. |
+| `src/core/` | Framework-free helpers shared by views: timed-CSV parsing (`timed-csv.ts`), time-series lookup (`series.ts`) and DOM building (`dom.ts`). |
+| `src/three/` | Three.js building blocks: the `Assembly` interface and `createAssembly` (`assembly.ts`), staging (`stage.ts`), surface finishes (`finishes.ts`) and GLB/STL/STEP import (`import/`). |
+| `src/views/<view>/` | One folder per tab, each with `main.ts` (exports `mount(container)`), `view.html` and `style.css`. Flyover keeps its flight parsing, basemap and NOTAM code in subfolders. |
+| `src/styles/` | Shared design tokens (`tokens.css`), controls and panels (`base.css`) and the shell layout (`shell.css`). |
+| `models/assemblies/` | Authored 3D assemblies, one folder each, catalogued in `index.ts`. `display-details.ts` holds the shared geometry helpers. |
+| `models/engine-diagrams/` | Selectable SVG engine illustrations, catalogued in `index.js`. |
 | `static/data/` | Data examples, configuration and format guides. |
 | `scripts/serve.mjs` | Local/intranet static server for `dist/`. |
 
-To add a 3D model, create its folder under `models/` and register its factory in `models/index.ts`. The catalogue distinguishes Assembly-only examples from the models also available in Flyover. Engine SVG diagrams have a separate catalogue in `src/engines/main.ts`.
+### Extending
+
+- **A 3D model:** create `models/assemblies/<name>/model.ts` exporting a factory (use `assemblyBuilder` from `display-details.ts`, or `createAssembly` directly), then add one entry to `models/assemblies/index.ts`. Entries in `models` also appear in Flyover; set `flyoverRotation` if the model's long axis is not Y. The factory is imported only when the model is first chosen.
+- **An engine diagram:** add `models/engine-diagrams/<name>/model.js` and one line in `models/engine-diagrams/index.js`.
+- **A tab:** add `src/views/<name>/main.ts` exporting `mount(container)`, which returns `{ setVisible }`, and add one entry to `src/app/views.ts`. The shell creates the button and container, and loads the view on its first visit.
 
 GLB viewing imports are supported. STEP/SolidWorks conversion and editable CAD features are not provided by the browser. See the [GLB import guide](../static/data/assembly-import/README.md).
 
@@ -67,4 +70,3 @@ IIS, nginx or another static web server can serve `dist/` directly. Relative ass
 - [NASA imagery provenance and regeneration](../static/earth/README.md)
 - [Demo NOTAM data format](../static/data/README.md)
 
-The orientation and orientation-replay modules remain in the source, but their old manual controls are not exposed in the current Assembly screen. The replay reference marks those instructions as legacy.

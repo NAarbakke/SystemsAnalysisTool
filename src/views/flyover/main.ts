@@ -1,0 +1,244 @@
+import 'cesium/Build/Cesium/Widgets/widgets.css';
+import './style.css';
+import markup from './view.html?raw';
+import {
+  Viewer, EllipsoidTerrainProvider, Cartesian3, JulianDate, ClockRange, ClockStep, Color, HeadingPitchRange,
+  CallbackPositionProperty, BoundingSphere, ModelGraphics, Cartesian2, Ion,
+} from 'cesium';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+import { models } from '../../../models/assemblies/index.ts';
+import { exampleFlight, parseFlight, type FlightSample } from './flight/data.ts';
+import { createFlightPath } from './flight/path.ts';
+import { vehicleOrientation } from './flight/orientation.ts';
+import { parseStateVector, stateHeader, exampleState, interpolateState, type StateOptions } from './flight/state-vector.ts';
+import { addNotamLayer } from './notam/layer.ts';
+import { attachBasemap } from './basemap/layer.ts';
+import type { ViewController } from '../../app/views.ts';
+
+export async function mount(container: HTMLElement): Promise<ViewController> {
+  container.innerHTML = markup;
+  try { return await createFlyover(); }
+  catch (cause) {
+    console.error(cause);
+    container.querySelector('#flight-message')!.textContent = 'Could not load the globe. Check WebGL support and the local globe assets, then reload.';
+    return { setVisible() {} };
+  }
+}
+
+async function createFlyover(): Promise<ViewController> {
+  const message = document.querySelector<HTMLElement>('#flight-message')!;
+  Ion.defaultAccessToken = '';
+  const viewer = new Viewer('globe', {
+    baseLayer: false, terrainProvider: new EllipsoidTerrainProvider(),
+    baseLayerPicker: false, geocoder: false, animation: false, timeline: false,
+    homeButton: false, sceneModePicker: false, navigationHelpButton: false,
+    fullscreenButton: false, infoBox: false, selectionIndicator: false,
+    requestRenderMode: true, maximumRenderTimeChange: Infinity,
+    shouldAnimate: false,
+    useBrowserRecommendedResolution: false,
+    msaaSamples: 4,
+  });
+  viewer.scene.postProcessStages.fxaa.enabled = true;
+  viewer.scene.globe.enableLighting = false;
+  viewer.scene.skyAtmosphere!.show = true;
+  viewer.scene.skyBox!.show = false;
+  viewer.scene.sun!.show = false;
+  viewer.scene.moon!.show = false;
+  viewer.scene.backgroundColor = Color.BLACK;
+  const play = document.querySelector<HTMLButtonElement>('#flight-play')!;
+  const seek = document.querySelector<HTMLInputElement>('#flight-time')!;
+  const readout = document.querySelector<HTMLOutputElement>('#flight-time-value')!;
+  const positionText = document.querySelector<HTMLElement>('#flight-position')!;
+  const csv = document.querySelector<HTMLTextAreaElement>('#flight-csv')!;
+  const picker = document.querySelector<HTMLSelectElement>('#flyover-model')!;
+  const follow = document.querySelector<HTMLButtonElement>('#flight-follow')!;
+  const dof = document.querySelector<HTMLSelectElement>('#flight-dof')!;
+  const stateFields = Object.fromEntries(['position', 'velocity', 'attitude', 'frame', 'units', 'body'].map(key => [key, document.querySelector<HTMLSelectElement>(`#state-${key}`)!]));
+  const stateReadout = document.querySelector<HTMLElement>('#flight-state')!;
+  let loadedOptions: StateOptions | undefined;
+  function stateOptions(): StateOptions {
+    return { dof: dof.value, ...Object.fromEntries(Object.entries(stateFields).map(([key, input]) => [key, input.value])) } as StateOptions;
+  }
+  function describeFormat() {
+    pause();
+    document.querySelector<HTMLElement>('#state-options')!.hidden = dof.value === 'trajectory';
+    document.querySelector<HTMLElement>('#attitude-options')!.hidden = dof.value !== '6';
+    stateFields.velocity.querySelector<HTMLOptionElement>('option[value="body"]')!.disabled = dof.value !== '6';
+    if (dof.value !== '6' && stateFields.velocity.value === 'body') stateFields.velocity.value = 'enu';
+    document.querySelector('#flight-header')!.textContent = dof.value === 'trajectory' ? 'time,latitude,longitude,altitude' : stateHeader(stateOptions());
+    document.querySelector('#flight-format-help')!.textContent = 's · metres / degrees · m/s (Earth-relative)';
+    message.textContent = 'Unapplied format changes · Paused';
+  }
+  [dof, ...Object.values(stateFields)].forEach(input => input.addEventListener('change', describeFormat));
+  models.forEach(model => picker.add(new Option(model.title, model.id)));
+  let samples: FlightSample[] = [];
+  let duration = 0;
+  let start = JulianDate.fromIso8601('2026-01-01T00:00:00Z');
+  let vehicle: ReturnType<typeof viewer.entities.add> | undefined;
+  let routePositions: Cartesian3[] = [];
+  let modelURL: string | undefined;
+  let revision = 0;
+  let visible = true;
+  let following = false;
+  let disposed = false;
+  let geographicAt: ReturnType<typeof createFlightPath>;
+
+  function pause() { viewer.clock.shouldAnimate = false; play.textContent = 'Play'; }
+  function currentSeconds() { return Math.max(0, Math.min(duration, JulianDate.secondsDifference(viewer.clock.currentTime, start))); }
+  function updateReadout() {
+    if (!samples.length) return;
+    const time = currentSeconds();
+    seek.value = String(time);
+    readout.value = `${time.toFixed(1)} / ${duration.toFixed(1)} s`;
+    const geo = geographicAt(time);
+    const state = interpolateState(samples, time);
+    document.querySelector<HTMLElement>('#state-readout')!.hidden = !state.velocity;
+    stateReadout.textContent = '';
+    if (state.velocity) {
+      const ecef = Cartesian3.fromRadians(geo.longitude, geo.latitude, geo.height);
+      const speed = Math.hypot(...state.velocity);
+      stateReadout.textContent = `${loadedOptions?.dof}DOF · speed ${speed.toFixed(2)} m/s\nECEF position: ${[ecef.x, ecef.y, ecef.z].map(v => v.toFixed(2)).join(', ')} m\nECEF velocity: ${state.velocity.map(v => v.toFixed(2)).join(', ')} m/s`;
+      if (loadedOptions?.dof === '6') {
+        const attitude = vehicle?.orientation?.getValue(viewer.clock.currentTime);
+        if (attitude) stateReadout.textContent += `\nQuaternion (FLU body → ECEF; x,y,z,w): ${[attitude.x, attitude.y, attitude.z, attitude.w].map(v => v.toFixed(6)).join(', ')}`;
+      }
+      if (state.rates) {
+        const factor = loadedOptions?.units === 'degrees' ? 180 / Math.PI : 1;
+        stateReadout.textContent += `\np, q, r (${loadedOptions?.body.toUpperCase()}): ${state.rates.map(v => (v * factor).toFixed(3)).join(', ')} ${factor === 1 ? 'rad/s' : 'deg/s'}`;
+      }
+    }
+    positionText.textContent = `${(geo.latitude * 180 / Math.PI).toFixed(2)}° lat · ${(geo.longitude * 180 / Math.PI).toFixed(2)}° lon · ${(geo.height / 1000).toFixed(1)} km altitude`;
+  }
+  function overview() {
+    following = false;
+    follow.setAttribute('aria-pressed', 'false');
+    viewer.trackedEntity = undefined;
+    const sphere = BoundingSphere.fromPoints(routePositions);
+    viewer.camera.flyToBoundingSphere(sphere, { duration: 0, offset: new HeadingPitchRange(0, -0.9, Math.max(1_000_000, sphere.radius * 3.4)) });
+    viewer.scene.requestRender();
+  }
+  async function updateModel() {
+    const token = ++revision;
+    const definition = models.find(model => model.id === picker.value)!;
+    let assembly: Awaited<ReturnType<typeof definition.create>> | undefined;
+    try {
+      assembly = await definition.create();
+      if (disposed || token !== revision) return;
+      assembly.root.rotation.set(...(definition.flyoverRotation ?? [Math.PI / 2, 0, 0]));
+      const binary = await new GLTFExporter().parseAsync(assembly.root, { binary: true });
+      if (disposed || token !== revision) return;
+      const url = URL.createObjectURL(new Blob([binary as ArrayBuffer], { type: 'model/gltf-binary' }));
+      const oldURL = modelURL;
+      modelURL = url;
+      if (vehicle) vehicle.model = new ModelGraphics({ uri: url, minimumPixelSize: 150, scale: 1500, lightColor: new Color(2, 2, 2) });
+      if (oldURL) URL.revokeObjectURL(oldURL);
+      viewer.scene.requestRender();
+    } catch (cause) {
+      console.error(cause);
+      message.textContent = 'The vehicle model could not load. The position marker still shows the flight.';
+    } finally { assembly?.dispose(); }
+  }
+  function loadFlight(text: string) {
+    pause();
+    try {
+      const options = dof.value === 'trajectory' ? undefined : stateOptions();
+      const parsed = options ? parseStateVector(text, options) : parseFlight(text);
+      const path = createFlightPath(parsed);
+      loadedOptions = options;
+      samples = parsed;
+      geographicAt = path;
+      duration = samples.at(-1)!.time;
+      start = JulianDate.fromIso8601('2026-01-01T00:00:00Z');
+      viewer.clock.startTime = start.clone();
+      viewer.clock.stopTime = JulianDate.addSeconds(start, duration, new JulianDate());
+      viewer.clock.currentTime = start.clone();
+      viewer.clock.clockRange = ClockRange.CLAMPED;
+      viewer.clock.clockStep = ClockStep.SYSTEM_CLOCK_MULTIPLIER;
+      viewer.clock.multiplier = 1;
+      viewer.entities.removeAll();
+      routePositions = [];
+      // A bounded display trail, independent of the full-resolution replay data.
+      const count = Math.min(2000, Math.max(200, samples.length));
+      for (let i = 0; i <= count; i++) {
+        const geo = geographicAt(duration * i / count);
+        routePositions.push(Cartesian3.fromRadians(geo.longitude, geo.latitude, geo.height));
+      }
+      viewer.entities.add({ polyline: { positions: routePositions, width: 2, material: Color.fromCssColorString('#d0485a').withAlpha(0.85) } });
+      for (const [index, name] of [[0, 'Start'], [samples.length - 1, 'Finish']] as const) {
+        const sample = samples[index];
+        viewer.entities.add({ position: Cartesian3.fromDegrees(sample.longitude, sample.latitude, sample.altitude),
+          point: { pixelSize: 8, color: Color.WHITE }, label: { text: name, font: '13px "IBM Plex Mono", monospace', showBackground: true, pixelOffset: new Cartesian2(0, -24) } });
+      }
+      const position = new CallbackPositionProperty((time, result) => {
+        const geo = geographicAt(JulianDate.secondsDifference(time!, start));
+        return Cartesian3.fromRadians(geo.longitude, geo.latitude, geo.height, undefined, result);
+      }, false);
+      const orientation = vehicleOrientation(samples, start, duration, position);
+      vehicle = viewer.entities.add({ name: 'Vehicle', position, orientation,
+        point: { pixelSize: 6, color: Color.fromCssColorString('#f59a4a') },
+        viewFrom: new Cartesian3(-350000, -350000, 220000),
+        ...(modelURL ? { model: { uri: modelURL, minimumPixelSize: 150, scale: 1500, lightColor: new Color(2, 2, 2) } } : {}),
+      });
+      seek.max = String(duration);
+      updateReadout(); overview();
+      message.textContent = `${samples.length} samples loaded · ${samples[0].attitudeECEF ? 'imported orientation' : 'faces along route'} · 1× playback`;
+      message.classList.remove('invalid');
+      if (options) message.textContent = `${samples.length} samples loaded · ${options.dof}DOF · ${options.position.toUpperCase()} position · ${options.velocity.toUpperCase()} velocity${options.dof === '6' ? ` · ${options.attitude}, ${options.frame.toUpperCase()}, ${options.body.toUpperCase()}` : ''}.`;
+    } catch (cause) {
+      message.textContent = cause instanceof Error ? cause.message : 'Could not load flight.';
+      message.classList.add('invalid');
+    }
+  }
+  picker.addEventListener('change', () => { void updateModel(); });
+  play.addEventListener('click', () => {
+    if (viewer.clock.shouldAnimate) { pause(); return; }
+    if (currentSeconds() >= duration) viewer.clock.currentTime = start.clone();
+    viewer.clock.shouldAnimate = true; play.textContent = 'Pause'; viewer.scene.requestRender();
+  });
+  seek.addEventListener('input', () => {
+    pause(); viewer.clock.currentTime = JulianDate.addSeconds(start, Number(seek.value), new JulianDate());
+    updateReadout(); viewer.scene.requestRender();
+  });
+  document.querySelector('#flight-restart')!.addEventListener('click', () => {
+    pause(); viewer.clock.currentTime = start.clone(); updateReadout(); viewer.scene.requestRender();
+  });
+  document.querySelector('#flight-overview')!.addEventListener('click', overview);
+  follow.addEventListener('click', () => {
+    following = !following;
+    if (!following) { overview(); return; }
+    follow.setAttribute('aria-pressed', 'true'); viewer.trackedEntity = vehicle; viewer.scene.requestRender();
+  });
+  document.querySelector('#flight-load')!.addEventListener('click', () => loadFlight(csv.value));
+  document.querySelector('#flight-example')!.addEventListener('click', () => { csv.value = dof.value === 'trajectory' ? exampleFlight : exampleState(stateOptions()); loadFlight(csv.value); });
+  document.querySelector<HTMLInputElement>('#flight-file')!.addEventListener('change', async event => {
+    pause();
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    if (file.size > 5_000_000) { message.textContent = 'Use a CSV smaller than 5 MB.'; return; }
+    try { csv.value = await file.text(); message.textContent = 'File ready'; }
+    catch { message.textContent = 'Could not read CSV file.'; }
+  });
+  viewer.clock.onTick.addEventListener(() => {
+    if (!visible || !viewer.clock.shouldAnimate) return;
+    updateReadout(); viewer.scene.requestRender();
+    if (currentSeconds() >= duration) pause();
+  });
+  viewer.scene.renderError.addEventListener((_scene, cause) => {
+    pause(); message.textContent = 'Globe rendering stopped. Reload to restart it.'; console.error(cause);
+  });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+  window.addEventListener('pagehide', event => {
+    if (event.persisted) return;
+    disposed = true; revision++; viewer.destroy();
+    if (modelURL) URL.revokeObjectURL(modelURL);
+  });
+  csv.value = exampleFlight; loadFlight(exampleFlight);
+  await updateModel();
+  await addNotamLayer(viewer);
+  await attachBasemap(viewer);
+  document.querySelectorAll<HTMLButtonElement | HTMLInputElement>('#flyover-view button, #flight-time').forEach(control => { control.disabled = false; });
+  return { setVisible(value: boolean) {
+    visible = value; pause(); viewer.useDefaultRenderLoop = value;
+    if (value) { viewer.resize(); viewer.scene.requestRender(); }
+  } };
+}

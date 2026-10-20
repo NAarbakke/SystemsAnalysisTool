@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { numericTable, jsonTable, timeValues, defaultTime, plotSamples, demoTable, describeColumn, groupColumns, eventColumns, phaseEvents, seriesStats, MAX_GROUP, PALETTE } from '../src/dashboard/data.ts';
+import { numericTable, jsonTable, timeValues, defaultTime, plotSamples, demoTable, describeColumn, groupColumns, eventColumns, seriesStats, MAX_GROUP, PALETTE } from '../src/views/telemetry/data.ts';
 
 const PALETTE_WIDTH = PALETTE.light.length;
 
@@ -47,9 +47,6 @@ test('demo has a phase channel, twelve quantities and valid time', () => {
   assert.equal(demo.columns.length, 14);
   assert.equal(timeValues(demo, defaultTime(demo)).at(-1), 60);
   assert.deepEqual(eventColumns(demo), ['flight_phase']);
-  assert.deepEqual(phaseEvents(demo, 'time_s', 'flight_phase'), [
-    { time: 12, label: '1' }, { time: 30, label: '2' }, { time: 45, label: '3' },
-  ]);
 });
 
 test('unit suffixes are read off column names without swallowing frame letters', () => {

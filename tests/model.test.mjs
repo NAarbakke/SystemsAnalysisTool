@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Mesh } from 'three';
-import { models } from '../models/index.ts';
+import { assemblyModels } from '../models/assemblies/index.ts';
 
-for (const definition of models) {
-  test(`${definition.id}: geometry budget, bounds, and component identities`, () => {
-    const model = definition.create();
+for (const definition of assemblyModels.filter(model => !model.browserOnly)) {
+  test(`${definition.id}: geometry budget, bounds, and component identities`, async () => {
+    const model = await definition.create();
     try {
       assert.ok(model.parts.length > 0);
       assert.equal(new Set(model.parts.map(p => p.mesh.userData.partId)).size, model.parts.length);
@@ -26,8 +26,8 @@ for (const definition of models) {
     } finally { model.dispose(); }
   });
 
-  test(`${definition.id}: reversible animation and shared-resource cleanup`, () => {
-    const model = definition.create();
+  test(`${definition.id}: reversible animation and shared-resource cleanup`, async () => {
+    const model = await definition.create();
     const geometryIds = model.parts.map(p => p.mesh.geometry.uuid);
     model.setExplosion(1);
     for (const { mesh, home, offset } of model.parts) assert.ok(mesh.position.distanceTo(home.clone().add(offset)) < 1e-10);

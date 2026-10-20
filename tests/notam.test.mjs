@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { parseNotamAreas } from '../src/notam-data.ts';
+import { parseNotamAreas } from '../src/views/flyover/notam/data.ts';
 
 test('local demo areas include one circle and one closed polygon near the example route', async () => {
   const areas = parseNotamAreas(JSON.parse(await readFile(new URL('../static/data/notams.geojson', import.meta.url), 'utf8')));

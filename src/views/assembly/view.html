@@ -1,0 +1,28 @@
+<div id="viewport" role="img" aria-label="Interactive assembly model. Drag to rotate and scroll to zoom."></div>
+<header class="panel assembly-source">
+  <label for="model-picker">Model</label>
+  <select id="model-picker" disabled></select>
+  <label for="assembly-file">Import assembly · GLB, STL, STEP</label>
+  <input id="assembly-file" type="file" accept=".glb,.stl,.stp,.step,model/gltf-binary,model/stl,model/step" disabled>
+  <div class="actions"><button id="assembly-example" type="button">Load example GLB</button></div>
+  <p id="assembly-import-status" class="note" role="status"></p>
+</header>
+<aside id="component-panel" class="panel" aria-label="Assembly components">
+  <div class="panel-title"><h2>Components</h2><span id="component-count" class="eyebrow"></span></div>
+  <label class="sr-only" for="component-search">Find component</label>
+  <input id="component-search" type="search" placeholder="Find component">
+  <div id="component-list" class="part-list" role="group" aria-label="Components"></div>
+  <section id="component-detail" aria-live="polite"><h3 id="component-name">Select a component</h3><p id="component-material" class="note"></p></section>
+  <section id="component-operation" hidden aria-label="Component operating readings">
+    <p class="eyebrow">Operating readings</p><p id="component-data-source" class="note"></p>
+    <label id="component-stage-label" for="component-stage">Snapshot</label><select id="component-stage"></select>
+    <dl id="component-readings" class="readings" aria-live="polite"></dl>
+  </section>
+  <details id="component-cad-properties" hidden><summary>CAD properties</summary><dl id="component-properties" class="properties"></dl></details>
+</aside>
+<div class="separation-dock">
+  <label class="label" for="separation">Part separation <output id="separation-value" for="separation">0%</output></label>
+  <input id="separation" type="range" min="0" max="100" step="1" value="0" disabled>
+</div>
+<p id="status" class="sr-only" role="status" aria-live="polite">Preparing model.</p>
+<p id="error" role="alert" hidden></p>

@@ -1,11 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseFlight, exampleFlight } from '../src/flight-data.ts';
-import { createFlightPath } from '../src/flight-path.ts';
+import { parseFlight, exampleFlight } from '../src/views/flyover/flight/data.ts';
+import { createFlightPath } from '../src/views/flyover/flight/path.ts';
 
 test('position CSV normalizes time and preserves geographic coordinates and optional attitude', () => {
   const data = parseFlight('\uFEFFtime,latitude,longitude,altitude,roll,pitch,yaw\r\n20,50,179,2000,10,20,30\r\n22,51,-179,2500,20,30,40\r\n');
-  assert.deepEqual(data[0], { time: 0, latitude: 50, longitude: 179, altitude: 2000, angles: [10, 20, 30] });
+  const { attitudeECEF, ...position } = data[0];
+  assert.deepEqual(position, { time: 0, latitude: 50, longitude: 179, altitude: 2000 });
+  assert.ok(Math.abs(Math.hypot(...attitudeECEF) - 1) < 1e-12);
+  assert.equal(parseFlight(exampleFlight)[0].attitudeECEF, undefined);
   assert.equal(data[1].time, 2);
   assert.equal(data[1].longitude, -179);
   assert.equal(parseFlight(exampleFlight).at(-1).time, 60);

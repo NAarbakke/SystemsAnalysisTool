@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readComponentInfo, readComponentStages } from '../src/component-data.ts';
-import { createIndustrialMotor } from '../models/industrial-motor/model.ts';
+import { readComponentInfo, readComponentStages } from '../src/views/assembly/component-data.ts';
+import { createIndustrialMotor } from '../models/assemblies/industrial-motor/model.ts';
 test('component metadata rejects nonphysical mass and malformed readings but preserves zero',()=>{
   assert.deepEqual(readComponentInfo({material:'Steel',massKg:-1}),{material:'Steel'});
   assert.deepEqual(readComponentInfo(null),{});

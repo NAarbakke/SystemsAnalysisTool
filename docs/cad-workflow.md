@@ -1,6 +1,6 @@
 # CAD authoring and the local Three.js viewer
 
-The viewer generates each model from its own `models/<model-name>/model.ts` file.
+The viewer generates each model from its own `models/assemblies/<model-name>/model.ts` file.
 The CAD workflow below is a proposed workflow for general assemblies, not an
 installed importer or a CAD reconstruction of the reference vehicle.
 
@@ -24,8 +24,7 @@ authoring workstation; copy the finished browser assets to the intranet host.
 
 The viewer can now also open STEP directly: it bundles an OpenCascade wasm kernel
 (`occt-import-js`) that tessellates the solids in the browser. That path needs no
-conversion step, but it produces a flat list of solids rather than the component
-hierarchy, materials and instancing a GLB export preserves. GLB remains the better
+conversion step and keeps the product tree, but not the materials a GLB export preserves. GLB remains the better
 viewing copy for a structured assembly; STEP is the quicker path for a one-off look.
 
 ## What STEP preserves
@@ -61,8 +60,8 @@ describes separate assembly, fused-shape, metadata, and glTF export paths.
    local, including any decoder files if mesh compression is introduced.
 
 The existing `setExplosion(amount)` interface is the animation boundary to reuse.
-An imported-model adapter would support `Object3D` groups instead of assuming each
-component is one `Mesh`. This adapter has not been implemented in this version.
+Imported assemblies are exploded by `src/three/explode.ts`, which moves whole
+`Object3D` groups as sub-assemblies and plans the layout from the tree.
 
 ## Tool choices
 

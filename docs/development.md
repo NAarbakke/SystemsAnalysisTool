@@ -68,5 +68,5 @@ IIS, nginx or another static web server can serve `dist/` directly. Relative ass
 - [Engine diagram structure](../models/engine-diagrams/README.md)
 - [Engine realism suggestions](engine-schematic-review.md)
 - [NASA imagery provenance and regeneration](../static/earth/README.md)
-- [Demo NOTAM data format](../static/data/README.md)
+- [NOTAM data format](../static/data/README.md)
 

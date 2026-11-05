@@ -2,30 +2,99 @@
   "type": "FeatureCollection",
   "features": [
     {
-      "type": "Feature",
-      "id": "DEMO-A",
-      "properties": {
-        "title": "DEMO NOTAM A",
-        "description": "Synthetic offshore circular area near the example route. Not a real NOTAM.",
-        "demo": true,
-        "radius_m": 140000,
-        "color": "#ffb347"
-      },
-      "geometry": { "type": "Point", "coordinates": [-20, 43] }
+      "type": "Feature", "id": "A5564/26",
+      "properties": { "title": "A5564/26", "description": "ZBPE temporary danger area, SFC-UNL. Issued 28 Oct 0449Z. Effective 31 Oct 0451-0515Z. Purpose not stated. Source: FAA NOTAM Search archive, retrieved 5 Nov 2026.", "demo": false, "color": "#ff6b89" },
+      "geometry": { "type": "Polygon", "coordinates": [[[109.0833, 39.4667], [109.7667, 39.3333], [109.6833, 39.0833], [109.0, 39.2167], [109.0833, 39.4667]]] }
     },
     {
-      "type": "Feature",
-      "id": "DEMO-B",
-      "properties": {
-        "title": "DEMO NOTAM B",
-        "description": "Synthetic polygon near the example route. Not a real NOTAM.",
-        "demo": true,
-        "color": "#ff6b89"
-      },
-      "geometry": {
-        "type": "Polygon",
-        "coordinates": [[[-3, 46.5], [1, 46.5], [2, 48.5], [-1.5, 49.5], [-3, 46.5]]]
-      }
+      "type": "Feature", "id": "A5561/26",
+      "properties": { "title": "A5561/26", "description": "ZLHW temporary danger area, SFC-UNL. Issued 28 Oct 0255Z. Effective 3 Nov 0005-0033Z. Purpose not stated. Source: FAA NOTAM Search archive, retrieved 5 Nov 2026.", "demo": false, "color": "#ff6b89" },
+      "geometry": { "type": "Polygon", "coordinates": [[[98.8167, 33.0667], [99.3667, 33.0167], [99.2667, 32.1833], [98.7167, 32.2333], [98.8167, 33.0667]]] }
+    },
+    {
+      "type": "Feature", "id": "A5562/26",
+      "properties": { "title": "A5562/26", "description": "ZPKM temporary danger area, SFC-UNL. Issued 28 Oct 0256Z. Effective 3 Nov 0006-0046Z. Purpose not stated. Source: FAA NOTAM Search archive, retrieved 5 Nov 2026.", "demo": false, "color": "#ff6b89" },
+      "geometry": { "type": "Polygon", "coordinates": [[[98.6333, 30.65], [99.2833, 30.6], [99.1167, 30.0833], [98.5833, 30.1333], [98.6333, 30.65]]] }
+    },
+    {
+      "type": "Feature", "id": "A5566/26",
+      "properties": { "title": "A5566/26", "description": "ZWUQ temporary danger area, SFC-UNL. Issued 28 Oct 0450Z. Effective 31 Oct 0420-0523Z. Purpose not stated. Source: FAA NOTAM Search archive, retrieved 5 Nov 2026.", "demo": false, "color": "#ff6b89" },
+      "geometry": { "type": "Polygon", "coordinates": [[[92.75, 43.0667], [94.0833, 43.05], [94.0333, 42.0833], [92.7167, 42.1333], [92.75, 43.0667]]] }
+    },
+    {
+      "type": "Feature", "id": "A5565/26",
+      "properties": { "title": "A5565/26", "description": "ZWUQ temporary danger area, SFC-UNL. Issued 28 Oct 0450Z. Effective 31 Oct 0420-0523Z. Purpose not stated. Source: FAA NOTAM Search archive, retrieved 5 Nov 2026.", "demo": false, "color": "#ff6b89" },
+      "geometry": { "type": "Polygon", "coordinates": [[[80.3667, 39.2333], [84.7167, 39.25], [84.6667, 36.9667], [80.4333, 36.95], [80.3667, 39.2333]]] }
+    },
+    {
+      "type": "Feature", "id": "A5614/26",
+      "properties": { "title": "A5614/26", "description": "ZWUQ airspace closed at 9,200 m and below within 90 km of Yudu VOR 'DJQ' (centre taken from the NOTAM Q line, about 1 arcminute precision). Issued 29 Oct 1847Z. Effective 30 Oct 1010-1350Z. Purpose not stated. Source: FAA NOTAM Search archive, retrieved 5 Nov 2026.", "demo": false, "radius_m": 90000, "color": "#ffb347" },
+      "geometry": { "type": "Point", "coordinates": [85.45, 38.2167] }
+    },
+    {
+      "type": "Feature", "id": "A5637/26",
+      "properties": { "title": "A5637/26", "description": "ZWUQ area closed GND-UNL within 30 km. Issued 30 Oct 2048Z. Effective 31 Oct 0010-0030Z. Purpose not stated. Source: FAA NOTAM Search archive, retrieved 5 Nov 2026.", "demo": false, "radius_m": 30000, "color": "#ffb347" },
+      "geometry": { "type": "Point", "coordinates": [89.1086, 39.2683] }
+    },
+    {
+      "type": "Feature", "id": "A5642/26+A5741/26",
+      "properties": { "title": "A5642/26 · A5741/26", "description": "ZWUQ area closed GND-UNL within 50 km, two NOTAMs for the same circle. A5642: issued 30 Oct 2105Z, effective 31 Oct 1205-1225Z. A5741: issued 4 Nov 1729Z, effective 5 Nov 0050-0110Z. Purpose not stated. Source: FAA NOTAM Search archive, retrieved 5 Nov 2026.", "demo": false, "radius_m": 50000, "color": "#ffb347" },
+      "geometry": { "type": "Point", "coordinates": [86.3728, 41.5458] }
+    },
+    {
+      "type": "Feature", "id": "A5672/26",
+      "properties": { "title": "A5672/26", "description": "ZLHW temporary danger area, SFC-UNL. Issued 2 Nov 0148Z. Effective 6 Nov 2328-2350Z. Purpose not stated. Source: FAA NOTAM Search archive, retrieved 5 Nov 2026.", "demo": false, "color": "#ff6b89" },
+      "geometry": { "type": "Polygon", "coordinates": [[[100.0, 40.25], [100.3667, 40.2167], [100.2333, 39.6167], [99.8833, 39.6667], [100.0, 40.25]]] }
+    },
+    {
+      "type": "Feature", "id": "A5673/26",
+      "properties": { "title": "A5673/26", "description": "ZLHW/ZPKM temporary danger area, SFC-UNL. Issued 2 Nov 0150Z. Effective 6 Nov 2329-2357Z. Purpose not stated. Source: FAA NOTAM Search archive, retrieved 5 Nov 2026.", "demo": false, "color": "#ff6b89" },
+      "geometry": { "type": "Polygon", "coordinates": [[[97.65, 30.7667], [97.3, 30.8333], [97.6, 32.05], [97.95, 31.9833], [97.65, 30.7667]]] }
+    },
+    {
+      "type": "Feature", "id": "A5701/26",
+      "properties": { "title": "A5701/26", "description": "ZWUQ airspace closed 8,400-9,200 m within 30 km. Issued 2 Nov 1745Z. Effective 3 Nov 0600-1130Z (estimated end). Purpose not stated. Source: FAA NOTAM Search archive, retrieved 5 Nov 2026.", "demo": false, "radius_m": 30000, "color": "#ffb347" },
+      "geometry": { "type": "Point", "coordinates": [84.9325, 45.4825] }
+    },
+    {
+      "type": "Feature", "id": "A5707/26",
+      "properties": { "title": "A5707/26", "description": "ZWUQ entry forbidden for all aircraft at 9,200 m and below. Issued 2 Nov 1807Z. Effective 2 Nov 2300Z-3 Nov 0130Z. Purpose not stated. Source: FAA NOTAM Search archive, retrieved 5 Nov 2026.", "demo": false, "color": "#ffb347" },
+      "geometry": { "type": "Polygon", "coordinates": [[[91.2181, 40.9675], [88.9483, 42.1528], [90.9494, 44.2506], [93.29, 43.0739], [91.2181, 40.9675]]] }
+    },
+    {
+      "type": "Feature", "id": "A5708/26",
+      "properties": { "title": "A5708/26", "description": "ZWUQ airspace closed at 9,200 m and below within 50 km. Issued 2 Nov 1812Z. Effective 2 Nov 2300Z-3 Nov 0130Z. Purpose not stated. Source: FAA NOTAM Search archive, retrieved 5 Nov 2026.", "demo": false, "radius_m": 50000, "color": "#ffb347" },
+      "geometry": { "type": "Point", "coordinates": [89.1331, 43.0311] }
+    },
+    {
+      "type": "Feature", "id": "A5720/26+A5721/26",
+      "properties": { "title": "A5720/26 · A5721/26", "description": "ZBPE/ZLHW temporary danger area, SFC-UNL, two NOTAMs for the same area. Issued 4 Nov 0407-0408Z. Effective 5 Nov 0223-0245Z and 0830-0852Z. Purpose not stated. Source: FAA NOTAM Search archive, retrieved 5 Nov 2026.", "demo": false, "color": "#ff6b89" },
+      "geometry": { "type": "Polygon", "coordinates": [[[109.85, 39.0], [109.8, 38.8333], [109.4333, 38.8], [109.45, 38.9667], [109.55, 39.1], [109.85, 39.0]]] }
+    },
+    {
+      "type": "Feature", "id": "A5722/26+A5723/26",
+      "properties": { "title": "A5722/26 · A5723/26", "description": "ZBPE/ZLHW temporary danger area, SFC-UNL, two NOTAMs for the same area. Issued 4 Nov 0409Z. Effective 5 Nov 0224-0246Z and 0831-0853Z. Purpose not stated. Source: FAA NOTAM Search archive, retrieved 5 Nov 2026.", "demo": false, "color": "#ff6b89" },
+      "geometry": { "type": "Polygon", "coordinates": [[[108.25, 39.3333], [109.0, 39.1833], [108.9333, 38.9667], [108.1833, 39.1], [108.25, 39.3333]]] }
+    },
+    {
+      "type": "Feature", "id": "A5724/26+A5725/26",
+      "properties": { "title": "A5724/26 · A5725/26", "description": "ZLHW temporary danger area, SFC-UNL, two NOTAMs for the same area. Issued 4 Nov 0410Z. Effective 5 Nov 0225-0248Z and 0832-0855Z. Purpose not stated. Source: FAA NOTAM Search archive, retrieved 5 Nov 2026.", "demo": false, "color": "#ff6b89" },
+      "geometry": { "type": "Polygon", "coordinates": [[[102.25, 40.3167], [103.8833, 40.0833], [103.8, 39.7667], [102.1667, 40.0], [102.25, 40.3167]]] }
+    },
+    {
+      "type": "Feature", "id": "A5726/26+A5727/26",
+      "properties": { "title": "A5726/26 · A5727/26", "description": "ZLHW temporary danger area, SFC-UNL, two NOTAMs for the same area. Issued 4 Nov 0413Z. Effective 5 Nov 0226-0249Z and 0833-0856Z. Purpose not stated. Source: FAA NOTAM Search archive, retrieved 5 Nov 2026.", "demo": false, "color": "#ff6b89" },
+      "geometry": { "type": "Polygon", "coordinates": [[[96.8, 40.9], [98.45, 40.7333], [98.4, 40.4167], [96.75, 40.5833], [96.8, 40.9]]] }
+    },
+    {
+      "type": "Feature", "id": "A5728/26",
+      "properties": { "title": "A5728/26", "description": "ZLHW temporary danger area, SFC-UNL. Issued 4 Nov 0447Z. Effective 11 Nov 1132-1205Z. Purpose not stated. Source: FAA NOTAM Search archive, retrieved 5 Nov 2026.", "demo": false, "color": "#ff6b89" },
+      "geometry": { "type": "Polygon", "coordinates": [[[98.8, 35.7667], [99.0167, 35.7167], [98.9333, 35.35], [98.7, 35.3833], [98.8, 35.7667]]] }
+    },
+    {
+      "type": "Feature", "id": "A5738/26+A5740/26",
+      "properties": { "title": "A5738/26 · A5740/26", "description": "ZWUQ airspace closed within 40 km of Tacheng VOR 'TCH' (centre taken from the NOTAM Q line, about 1 arcminute precision): 9,200-10,700 m (A5738) and 10,400-11,600 m (A5740). Issued 4 Nov 1727-1728Z. Effective 5 Nov 0150-0400Z. Purpose not stated. Source: FAA NOTAM Search archive, retrieved 5 Nov 2026.", "demo": false, "radius_m": 40000, "color": "#ffb347" },
+      "geometry": { "type": "Point", "coordinates": [83.3667, 46.6667] }
     }
   ]
 }

@@ -50,7 +50,7 @@ See the [engine design notes](docs/engine-schematic-review.md) for the implement
 
 Assemblies, engine diagrams, plots and the bundled NASA globe overview work offline after building. **Satellite and street maps need a network connection** to their configured providers. Detailed offline mapping needs an internal imagery service.
 
-Imported models and simulation files are processed in the browser and cleared on reload. The colour mode and saved map views can persist locally. There is no account or live simulation connection. Example models, flight routes and NOTAM areas are illustrative; the app does not calculate flight dynamics or provide engineering measurements.
+Imported models and simulation files are processed in the browser and cleared on reload. The colour mode and saved map views can persist locally. There is no account or live simulation connection. Example models and flight routes are illustrative. NOTAM areas are a dated snapshot, not a live feed and not for flight planning. The app does not calculate flight dynamics or provide engineering measurements.
 
 ## Share on an intranet
 

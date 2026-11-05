@@ -3,13 +3,14 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { parseNotamAreas } from '../src/views/flyover/notam/data.ts';
 
-test('local demo areas include one circle and one closed polygon near the example route', async () => {
+test('bundled NOTAM areas parse as real, sourced shapes over mainland China', async () => {
   const areas = parseNotamAreas(JSON.parse(await readFile(new URL('../static/data/notams.geojson', import.meta.url), 'utf8')));
-  assert.equal(areas.length, 2);
-  assert.ok(areas.every(area => area.demo && area.title.includes('DEMO')));
-  assert.equal(areas[0].radius, 140000);
-  assert.deepEqual(areas[0].coordinates[0], [-20, 43]);
-  assert.deepEqual(areas[1].coordinates[0], areas[1].coordinates.at(-1));
+  assert.equal(areas.length, 19);
+  assert.ok(areas.every(area => !area.demo && area.description.includes('Source: FAA NOTAM Search')));
+  assert.ok(areas.every(area => area.coordinates.every(([lon, lat]) => lon > 73 && lon < 135 && lat > 18 && lat < 54)));
+  assert.equal(areas.find(area => area.id === 'A5708/26').radius, 50000);
+  const polygon = areas.find(area => area.id === 'A5707/26');
+  assert.deepEqual(polygon.coordinates[0], polygon.coordinates.at(-1));
 });
 
 test('invalid geographic areas are rejected before rendering', () => {

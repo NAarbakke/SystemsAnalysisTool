@@ -2,7 +2,7 @@
 
 `notams.geojson` is loaded once when Flyover initializes. Replace this deployed file and reload the page to provide intranet data. No stream or external service is configured.
 
-The included records are explicitly synthetic demo shapes, not actual NOTAMs. They lie near the default 60-second example route. They do not indicate restrictions along a different imported flight.
+The included records are a one-time snapshot of real NOTAMs, retrieved 5 November 2026 from the FAA NOTAM Search archive (https://notams.aim.faa.gov/notamSearch/). Each of the nine mainland China FIRs was searched for each date from 29 October to 4 November 2026. The file holds every inland temporary danger, restricted or closed area that was issued or in effect in that window (UTC), including expired ones. NOTAMs with identical shapes are merged into one area. None of the NOTAMs states a military purpose or any other purpose. Offshore areas and NOTAMs that list only route segments are not included. The file does not update, and it is not for flight planning.
 
 Supported GeoJSON: a `FeatureCollection` containing either a single-ring `Polygon`, or a `Point` with numeric `properties.radius_m` to draw a circle. Coordinates are `[longitude, latitude]` in WGS84 degrees. Polygon rings must be closed; holes and multipolygons are currently unsupported. The shapes are ground footprints only; altitude bands and activation times are not interpreted.
 
